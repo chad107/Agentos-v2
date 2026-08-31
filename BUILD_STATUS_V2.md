@@ -545,6 +545,89 @@ route).
 
 ---
 
+## Phase — Production Security, IP Protection & Commercialization Hardening ✅ (architecture + design; infrastructure remains Human-Developer/Owner-Decision)
+
+At the user's direction: a full production-readiness architecture and
+security pass, plus a formal AgentOS Core / Dashboard IP boundary, ahead of
+AgentOS becoming a licensed commercial SaaS product rather than a Valley
+River-only application. Eleven documents delivered as requested:
+`PRODUCTION_ARCHITECTURE.md`, `SECURITY_ARCHITECTURE.md`, `IP_BOUNDARY.md`,
+`DATABASE_DESIGN.md`, `AUTHORIZATION_MODEL.md`, `API_CONTRACT.md`,
+`INTEGRATION_SECURITY.md`, `DEPLOYMENT_GUIDE.md`,
+`HUMAN_DEVELOPER_HANDOFF.md`, `ENVIRONMENT_VARIABLES.example`,
+`PRODUCTION_READINESS_CHECKLIST.md` (the last of which also carries the
+requested 4-lane prioritized backlog).
+
+**Completed — code, not just documents:**
+- `IP_BOUNDARY.md`'s classification made real in the source: every file
+  classified RESTRICTED (AgentOS Core) now carries a `PROPRIETARY —
+  AgentOS Core` header comment (41 files), and `src/core/index.ts` is a
+  new barrel documenting the sanctioned Core→Dashboard service boundary —
+  additive only, zero behavior change (verified: all 53 tests unchanged in
+  outcome, build unchanged at 52 routes).
+- `src/domain/authorization.ts` (new) + `src/lib/tenant-context.ts`
+  extensions (`getTenantMembership()`, `hasAtLeastTenantMembership()`): a
+  real, tested tenant-membership/role scaffold (`TenantRole`: owner / admin
+  / manager / employee / customer) for real multi-tenant, multi-user
+  authorization — additive alongside the unchanged v1 `UserRole`. Seeded
+  with the one existing demo membership; never fabricates access for an
+  unrecognized user/tenant pair (`tests/authorization-model.test.ts`, 6 new
+  tests).
+- **A real, verified multi-tenant PostgreSQL schema** — `db/migrations/0000`
+  through `0005`, one table per `src/domain/*` entity, Row-Level Security
+  on every tenant-scoped table. Not merely written: actually executed
+  against a real local Postgres 16 instance this session. That process
+  caught and fixed three real bugs before they could reach a human
+  developer — (1) RLS silently doesn't apply to a table's owner by
+  default, so the schema now uses three separated roles
+  (`agentos_migrator`/`agentos_app`/`agentos_provisioning`) plus `FORCE
+  ROW LEVEL SECURITY`; (2) `CREATE EXTENSION` needs superuser, moved out of
+  the migration role's file; (3) tenant provisioning needed its own
+  narrowly-scoped, `BYPASSRLS` role rather than a permissive policy that
+  would have reopened the isolation hole. `db/verify-rls.sql` reproduces
+  the full proof (cross-tenant read blocked, cross-tenant write blocked,
+  no-context fails closed, unprivileged tenant creation blocked) — rerun
+  and passed clean after all three fixes.
+- `.eslintrc.json` now extends `plugin:jsx-a11y/recommended` (previously
+  only a handful of jsx-a11y rules were enabled via `next/core-web-vitals`)
+  — verified zero violations across all 57 `.tsx` files under `src/app`
+  and `src/components`, made a permanent part of the lint config (not a
+  one-off check), `eslint-plugin-jsx-a11y` added as an explicit
+  devDependency rather than left transitive.
+- Ran `npm audit` for the first real, current read since Milestone 0: still
+  10 advisories (1 critical, 6 high, 3 moderate), every one requiring a
+  semver-major breaking upgrade (`next` 14→16, `vitest` 2→4) —
+  deliberately **not** applied (`npm audit fix --force` was not run); a
+  Next.js major bump is exactly the kind of broad, testing-intensive
+  change that belongs in a planned Human-Developer pass, not a side effect
+  of a security review. Logged as a `PRODUCTION_READINESS_CHECKLIST.md`
+  Lane 2 item with full detail.
+
+**Designed, not built (Blocked External / Human-Developer /
+Owner-Decision, per document):** real database deployment, real
+authentication, the physical Core/Dashboard repository split, real
+integration connections for all 15 vendors, background job/workflow
+execution, SaaS billing/onboarding, CI/CD, monitoring/alerting, rate
+limiting, encryption-at-rest/in-transit (hosting-dependent) — each with
+its exact status and owning document catalogued in
+`PRODUCTION_READINESS_CHECKLIST.md`.
+
+**Explicitly did not do, per the phase's own guardrails (verified true):**
+no credentials exposed (none exist to expose); the approval-first
+philosophy is unweakened (`src/approvals/engine.ts` untouched; new checks
+are strictly additive); no autonomous banking/payment capability exists
+anywhere in the new schema or code; no tenant access is silently granted
+(verified by both application-level tests and the real-Postgres RLS proof);
+no existing test or working functionality was removed (53/53 passing, up
+from 47); no mocked integration was changed to claim real operation.
+
+Full check suite green: `npm run typecheck` (strict), `npm run lint`
+(including the newly-strict a11y ruleset), `npm run test` (53/53 across 11
+suites, up from 47/47), `npm run build` (52 routes, unchanged — this phase
+added a library module and documentation, not new pages/routes).
+
+---
+
 ## Remaining work (honest scope assessment)
 
 Not attempted this session, and each large enough to warrant its own pass

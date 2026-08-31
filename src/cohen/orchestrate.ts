@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * Cohen manager layer: ranking, Top 3 selection, and conflict reconciliation.
  * Source: CLAUDE.md "Priority model", 02_SYSTEM_ARCHITECTURE.md

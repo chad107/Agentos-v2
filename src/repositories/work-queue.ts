@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * Unified Work Queue read model (01_MASTER_SPEC.md "Work Queue"). Merges
  * open Approval Centre proposals (src/repositories/approvals.ts) with

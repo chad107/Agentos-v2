@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * Mock adapters so the app is fully demoable without credentials
  * (CLAUDE.md "Development rules"; PROMPT_TO_START_CLAUDE_CODE.md #7).

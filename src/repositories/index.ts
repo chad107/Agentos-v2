@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 export * from "./recommendations";
 export * from "./approvals";
 export * from "./sales";

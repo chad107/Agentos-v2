@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * Agent Registry V2 contract overlay. Source: 01_MASTER_SPEC.md "Standard
  * Agent Contract". Keyed by the existing v1 `AgentId` (src/domain/entities.ts)

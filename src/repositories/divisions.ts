@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * Universal Division Workspace read model. Computes each division's KPI
  * cards and alert/exception counts from the real repository data that

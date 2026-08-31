@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * Local file-backed durability for the in-memory store (src/data/store.ts).
  *

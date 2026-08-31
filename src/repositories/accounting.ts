@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 import type { AccountingItem } from "@/domain";
 import { getStore } from "@/data/store";
 import { businessDaysFromNow } from "@/lib/dates";

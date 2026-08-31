@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * Authentication/RBAC stub. Source: 09_IMPLEMENTATION_PLAN.md Phase 0
  * ("Basic RBAC and audit framework") and Phase 7 ("SSO/auth provider" is

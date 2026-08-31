@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * AI provider abstraction. Source: 02_SYSTEM_ARCHITECTURE.md "AI provider
  * abstraction". No product logic may depend on one model vendor.

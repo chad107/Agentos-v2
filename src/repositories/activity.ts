@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 import { listEvents, type AuditFilter } from "@/audit/log";
 import { getStore } from "@/data/store";
 

@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * Division registry — the configuration-driven source for the Universal
  * Division Workspace (01_MASTER_SPEC.md "Universal Division Workspace").

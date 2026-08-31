@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * Decision/outcome memory (01_MASTER_SPEC.md "Institutional memory").
  * Decisions are derived from real `ApprovalDecision` + `ActionProposal`

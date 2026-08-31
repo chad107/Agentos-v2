@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * Progressive-trust / risk-tier governance types.
  * Source: 01_MASTER_SPEC.md "Governance, approvals, progressive trust".

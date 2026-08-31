@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 import type { Recommendation } from "@/domain";
 import { getStore } from "@/data/store";
 import { buildTop3 } from "@/cohen/orchestrate";

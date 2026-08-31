@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * The prohibited-action list. Source: CLAUDE.md "Authority model — MUST NOT",
  * 05_PERMISSIONS_AND_APPROVALS.md "PROHIBITED" class.

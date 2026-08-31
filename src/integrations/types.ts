@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * Adapter contract. Source: 06_INTEGRATIONS_AND_DATA_CONTRACTS.md.
  *

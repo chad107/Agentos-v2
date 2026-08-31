@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * Event envelope + workflow registry types. Source: 01_MASTER_SPEC.md
  * "Event-driven orchestration", "Event envelope example", "Canonical event

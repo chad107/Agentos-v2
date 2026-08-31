@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 import type { ActionProposal, ApprovalDecision, ProposalStatus } from "@/domain";
 import { getStore } from "@/data/store";
 import {

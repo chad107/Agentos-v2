@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 import { listEvents } from "@/events/bus";
 import type { EventEnvelope } from "@/domain/events";
 

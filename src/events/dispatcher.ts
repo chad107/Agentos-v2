@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * Minimal event -> workflow dispatch loop (01_MASTER_SPEC.md
  * "Event-driven orchestration": "Business events are published; policy

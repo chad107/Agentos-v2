@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * "Nothing Left Behind" — everything that requires eventual attention but
  * isn't currently one of Cohen's Top 3. This is a trust mechanism as much as

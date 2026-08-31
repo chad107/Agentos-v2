@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * Append-only audit trail. Source: 02_SYSTEM_ARCHITECTURE.md "Audit layer",
  * 05_PERMISSIONS_AND_APPROVALS.md "Audit" (never overwrite a historical

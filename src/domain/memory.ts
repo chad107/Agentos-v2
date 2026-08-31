@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * Four-layer memory + decision/outcome types. Source: 01_MASTER_SPEC.md
  * "Memory and knowledge". Additive alongside the existing v1

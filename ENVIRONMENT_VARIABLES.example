@@ -1,0 +1,144 @@
+# AgentOS — full environment variable reference (production hardening phase)
+#
+# This is the comprehensive, annotated reference for every environment
+# variable this codebase knows about or anticipates, across every document
+# in this phase. For the file Next.js actually reads during local
+# development, copy `.env.example` to `.env.local` — this file documents
+# more than the demo needs, deliberately, so a human developer planning a
+# real deployment has one place to see the whole surface.
+#
+# NEVER commit a file with real values. Every value below is either blank
+# or an obvious placeholder.
+
+# ============================================================================
+# App (existing — see .env.example)
+# ============================================================================
+NEXT_PUBLIC_APP_NAME="AgentOS"
+NEXT_PUBLIC_BUSINESS_NAME="Valley River Heat Pumps"
+AGENTOS_DEMO_MODE=true
+NODE_ENV=production
+
+# ============================================================================
+# Local persistence stopgap (existing — src/data/persistence.ts)
+# Irrelevant once DATABASE_URL below is wired up for real.
+# ============================================================================
+AGENTOS_DB_PATH=.data/agentos.sqlite
+
+# ============================================================================
+# Production database (DATABASE_DESIGN.md) — NEW this phase
+# Connect as agentos_app ONLY. Never point the running application at
+# agentos_migrator or agentos_provisioning — see DEPLOYMENT_GUIDE.md.
+# ============================================================================
+DATABASE_URL=
+# Only the tenant-onboarding service should ever read this one — see
+# AUTHORIZATION_MODEL.md "Tenant provisioning". Store separately from
+# DATABASE_URL in the secret manager with tighter access control.
+DATABASE_PROVISIONING_URL=
+
+# ============================================================================
+# Authentication (AUTHORIZATION_MODEL.md) — Owner Decision on provider,
+# NOT made. Placeholders shaped for a generic OAuth/OIDC provider; adjust
+# to whichever is actually chosen.
+# ============================================================================
+AUTH_PROVIDER=none
+AUTH_CLIENT_ID=
+AUTH_CLIENT_SECRET=
+AUTH_ISSUER_URL=
+# Session/JWT signing secret — generate with a real CSPRNG (e.g. `openssl
+# rand -base64 32`), never reuse across environments.
+AUTH_SESSION_SECRET=
+
+# ============================================================================
+# Secret manager reference (SECURITY_ARCHITECTURE.md) — which provider, if
+# any, holds the real values for everything below at runtime. Left generic
+# since no provider is chosen.
+# ============================================================================
+SECRET_MANAGER_PROVIDER=none
+
+# ============================================================================
+# Model provider abstraction (existing — src/cohen/model-provider.ts)
+# ============================================================================
+MODEL_PROVIDER=none
+MODEL_PROVIDER_API_KEY=
+
+# ============================================================================
+# Integrations (INTEGRATION_SECURITY.md) — every one BLOCKED_EXTERNAL
+# today. OAuth client id/secret only; per-tenant access/refresh tokens
+# belong in the separate encrypted token store described in
+# INTEGRATION_SECURITY.md, never in a process-wide env var.
+# ============================================================================
+
+# --- Jobber (Tier 1) ---
+JOBBER_CLIENT_ID=
+JOBBER_CLIENT_SECRET=
+JOBBER_REDIRECT_URI=
+
+# --- QuickBooks Online (Tier 1) ---
+QBO_CLIENT_ID=
+QBO_CLIENT_SECRET=
+
+# --- Google (Calendar, Drive, Gmail — one OAuth app, scoped per use) ---
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+
+# --- RingCentral (Tier 1) ---
+RINGCENTRAL_CLIENT_ID=
+RINGCENTRAL_CLIENT_SECRET=
+
+# --- CompanyCam ---
+COMPANYCAM_API_KEY=
+
+# --- Sortly ---
+SORTLY_API_KEY=
+
+# --- Canva ---
+CANVA_CLIENT_ID=
+CANVA_CLIENT_SECRET=
+
+# --- Meta advertising ---
+META_ADS_APP_ID=
+META_ADS_APP_SECRET=
+
+# --- Google advertising ---
+GOOGLE_ADS_CLIENT_ID=
+GOOGLE_ADS_CLIENT_SECRET=
+GOOGLE_ADS_DEVELOPER_TOKEN=
+
+# --- Webhook signature verification (INTEGRATION_SECURITY.md) ---
+JOBBER_WEBHOOK_SECRET=
+QBO_WEBHOOK_SECRET=
+COMPANYCAM_WEBHOOK_SECRET=
+RINGCENTRAL_WEBHOOK_SECRET=
+
+# --- Tier 2 sources (existing) ---
+FACEBOOK_LEADS_ACCESS_TOKEN=
+GOOGLE_REVIEWS_API_KEY=
+WEBSITE_FORMS_WEBHOOK_SECRET=
+
+# ============================================================================
+# Rate limiting (SECURITY_ARCHITECTURE.md) — not implemented; placeholder
+# for whichever provider is chosen (a Redis-backed limiter is a common
+# self-hosted choice).
+# ============================================================================
+RATE_LIMIT_PROVIDER=none
+RATE_LIMIT_REDIS_URL=
+
+# ============================================================================
+# Monitoring / observability (SECURITY_ARCHITECTURE.md) — not implemented.
+# ============================================================================
+MONITORING_PROVIDER=none
+MONITORING_DSN=
+LOG_LEVEL=info
+
+# ============================================================================
+# Notifications (existing)
+# ============================================================================
+PUSH_NOTIFICATION_PROVIDER=none
+PUSH_NOTIFICATION_KEY=
+
+# ============================================================================
+# Runtime-set, not human-configured — documented for completeness only.
+# Do not set these manually.
+# ============================================================================
+# NEXT_PHASE          — set by Next.js itself during `next build`
+# VITEST               — set by the vitest test runner itself

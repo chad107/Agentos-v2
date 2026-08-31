@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * Approval state machine. Source: 05_PERMISSIONS_AND_APPROVALS.md,
  * 03_DASHBOARD_UX_SPEC.md "Approval states".

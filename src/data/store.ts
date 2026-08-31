@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * Single in-memory store, seeded once per process. This stands in for a
  * real database in the demo (02_SYSTEM_ARCHITECTURE.md notes a

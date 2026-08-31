@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * KPI observation history. In-memory, process-lifetime only (matches
  * src/data/store.ts's existing persistence model). Nothing is recorded

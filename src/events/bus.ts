@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * Minimal in-memory event bus implementing the event envelope contract
  * (src/domain/events.ts, 01_MASTER_SPEC.md "Event-driven orchestration").

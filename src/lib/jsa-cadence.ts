@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * Pure daily-JSA cadence function, extracted for testability (AT-08).
  * Source: CLAUDE.md "Daily cadence" — 4:00 PM reminder, 4:30 PM escalation.

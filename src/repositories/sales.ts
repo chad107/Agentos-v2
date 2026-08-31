@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 import type { Lead } from "@/domain";
 import { getStore } from "@/data/store";
 import { minutesBetween, now } from "@/lib/dates";

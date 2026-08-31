@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * Ask Cohen: deterministic demo chat grounded in the recommendation/evidence
  * the user is currently looking at (AT-12 — answers "why did you flag this?"

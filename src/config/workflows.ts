@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 /**
  * Workflow registry. Source: 01_MASTER_SPEC.md "Canonical workflows" and
  * the Valley River-specific timing rules scattered through "Divisions and

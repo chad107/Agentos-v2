@@ -1,3 +1,4 @@
+// PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
 import { top3Recommendations } from "./recommendations";
 import { listProposals } from "./approvals";
 import { leadsOutsideSla } from "./sales";

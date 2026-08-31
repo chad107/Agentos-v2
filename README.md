@@ -10,6 +10,14 @@ a v1 mock-data dashboard prototype, now being evolved toward the
   (v1 historical record, still accurate where not superseded).
 - **What V2 requires:** `01_MASTER_SPEC.md`.
 - **Gap analysis (verified against actual code):** `03_GAP_ANALYSIS.md`.
+- **Production security, IP protection & commercialization hardening:**
+  start at `PRODUCTION_ARCHITECTURE.md`, which links out to
+  `SECURITY_ARCHITECTURE.md`, `IP_BOUNDARY.md`, `DATABASE_DESIGN.md`,
+  `AUTHORIZATION_MODEL.md`, `API_CONTRACT.md`, `INTEGRATION_SECURITY.md`,
+  `DEPLOYMENT_GUIDE.md`, `HUMAN_DEVELOPER_HANDOFF.md`,
+  `ENVIRONMENT_VARIABLES.example`, and the actionable
+  `PRODUCTION_READINESS_CHECKLIST.md`. **Read `IP_BOUNDARY.md` before
+  giving any external developer access to this repository.**
 
 ## Quick start
 
