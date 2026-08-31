@@ -476,6 +476,75 @@ application-code security review).
 
 ---
 
+## Post-milestone-12 — local persistence (03_GAP_ANALYSIS.md gap M, partial) ✅
+
+Picked up after the initial 12-milestone pass, at the user's direction, as
+the highest-priority item on the human-developer punch list: "nothing here
+survives a deploy."
+
+**Completed:**
+- `src/data/persistence.ts`: `loadSnapshot()`/`saveSnapshot()` backed by
+  Node's built-in `node:sqlite` (`DatabaseSync`) — no new npm dependency.
+  One table, one row: the entire `Store` (`src/data/store.ts`) serialized
+  as JSON. Every field in `Store` is already plain JSON-safe data
+  (timestamps are ISO strings, not `Date` objects), so this round-trips
+  exactly with no revival logic.
+- `src/data/store.ts`: `getStore()` now hydrates from a disk snapshot on
+  first call if one exists, else builds fresh from seed (unchanged
+  behavior) and writes the first snapshot. A 5-second periodic flush plus
+  a flush on `beforeExit`/`SIGINT`/`SIGTERM` means a hard restart loses at
+  most ~5 seconds of writes, not everything.
+- **Correctly gated off** in the two places it would otherwise cause real
+  damage: `persistenceEnabled()` returns `false` whenever `process.env.VITEST`
+  is set (tests need a deterministic fresh-seeded store every run — verified
+  no `.data/` directory appears after `npm run test`) and whenever
+  `process.env.NEXT_PHASE === "phase-production-build"` (so `next build`'s
+  static generation — which does call `getStore()` for the SSG division
+  pages and static API routes — never touches disk; verified no `.data/`
+  directory appears after a clean `npm run build`).
+- Degrades gracefully, not a hard crash, if `node:sqlite` is unavailable
+  (older Node): `getDb()` is wrapped in try/catch and falls back to
+  in-memory-only behavior with a console warning — the existing behavior
+  from before this change.
+- `src/types/node-sqlite.d.ts`: a minimal hand-written ambient module
+  declaration, since the installed `@types/node` (^20.x) predates this
+  Node 22.5+ built-in and has no type declarations for it.
+- `tests/persistence.test.ts`: verifies the save/load round-trip against a
+  real temporary SQLite file, and that `persistenceEnabled()` correctly
+  reports `false` during a normal test run.
+- **Verified live, not just by code review**: started a production build
+  (`next start`), rejected a real proposal through the actual
+  `POST /api/approvals/:id/reject` route, confirmed the snapshot file grew
+  after the 5-second flush, killed the server process (`kill -9`, confirmed
+  zero `next-server` processes remained), started a completely fresh
+  instance, and confirmed the rejected proposal was still `rejected` (not
+  reset to `pending`) — proof this is real durability, not a no-op.
+
+**Explicitly NOT claimed — read before deploying:**
+- This is **not** the production database decision from
+  `03_GAP_ANALYSIS.md` gap M, which remains Human Review Required. It's a
+  single local file: it will silently misbehave (each instance seeing a
+  different, diverging snapshot) on any multi-instance or serverless/edge
+  deployment. It is only correct for a single, self-hosted, long-running
+  process.
+- It's a JSON blob snapshot, not a normalized relational schema — no
+  indexes, no queries, no migrations, no partial writes. Picking a real
+  database and designing that schema from the already-normalized
+  `src/domain/` types is still open work.
+- `node:sqlite` is an experimental Node API (logs an
+  `ExperimentalWarning`, harmless but worth knowing about) and requires
+  Node ≥22.5 — the app's declared `engines.node` (`>=18.18.0`) is
+  unchanged and still accurate, since persistence degrades gracefully to
+  the prior in-memory-only behavior on older Node rather than requiring
+  the bump.
+
+Full check suite green: `npm run typecheck` (strict), `npm run lint`,
+`npm run test` (47/47 across 10 suites, up from 45/45), `npm run build`
+(52 routes, unchanged — this was a `src/data/` layer change, not a new
+route).
+
+---
+
 ## Remaining work (honest scope assessment)
 
 Not attempted this session, and each large enough to warrant its own pass
@@ -496,9 +565,11 @@ rather than a shallow stub:
   exists); the dispatcher routes but doesn't execute a workflow's steps.
 - **Milestone 12 (remainder)**: a formal WCAG 2.1 AA accessibility audit,
   and dependency-vulnerability triage of the 10 pre-existing `npm audit`
-  advisories. Persistence and auth are still explicitly out of scope
-  pending a human infrastructure decision (03_GAP_ANALYSIS.md gap M) — the
-  punch list for exactly that is now in `README.md`.
+  advisories.
+- **Gap M (partial)**: single-process local persistence now exists (see
+  "Post-milestone-12" above) — but the real production database decision,
+  schema, and migrations remain open, and real auth/SSO is still
+  untouched. The punch list for both is in `README.md`.
 
 ---
 

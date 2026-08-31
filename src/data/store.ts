@@ -31,6 +31,7 @@ import type {
 import * as seed from "./seed";
 import { buildTop3 } from "@/cohen/orchestrate";
 import { recordEvent } from "@/audit/log";
+import { loadSnapshot, saveSnapshot, persistenceEnabled } from "./persistence";
 
 interface Store {
   users: User[];
@@ -130,14 +131,39 @@ function createStore(): Store {
 // A dev-mode hot-reload in Next.js can re-evaluate this module; stash the
 // store on `globalThis` so state (e.g. an approval a user just made) survives
 // a hot reload during a local dev session instead of silently resetting.
+// The same slot also survives a full process restart when persistence is
+// enabled (src/data/persistence.ts) — hydrated from disk instead of rebuilt
+// from seed data.
 declare global {
   // eslint-disable-next-line no-var
   var __agentosStore: Store | undefined;
+  // eslint-disable-next-line no-var
+  var __agentosPersistenceStarted: boolean | undefined;
+}
+
+const FLUSH_INTERVAL_MS = 5000;
+
+/** Registered once per process. Periodic snapshot + a final flush on shutdown, so a hard restart loses at most FLUSH_INTERVAL_MS of writes. */
+function startPersistenceLoop(): void {
+  if (globalThis.__agentosPersistenceStarted || !persistenceEnabled()) return;
+  globalThis.__agentosPersistenceStarted = true;
+
+  const flush = () => {
+    if (globalThis.__agentosStore) saveSnapshot(globalThis.__agentosStore);
+  };
+  const interval = setInterval(flush, FLUSH_INTERVAL_MS);
+  interval.unref?.(); // never keep the process alive just for this timer
+  for (const signal of ["beforeExit", "SIGINT", "SIGTERM"] as const) {
+    process.on(signal, flush);
+  }
 }
 
 export function getStore(): Store {
   if (!globalThis.__agentosStore) {
-    globalThis.__agentosStore = createStore();
+    const hydrated = loadSnapshot<Store>();
+    globalThis.__agentosStore = hydrated ?? createStore();
+    if (!hydrated) saveSnapshot(globalThis.__agentosStore); // first run: persist the initial seeded state
+    startPersistenceLoop();
   }
   return globalThis.__agentosStore;
 }

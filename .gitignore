@@ -5,6 +5,9 @@
 /.next/
 /out/
 
+# local sqlite persistence snapshot (src/data/persistence.ts) — never committed
+/.data/
+
 # production
 /build
 

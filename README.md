@@ -23,7 +23,7 @@ runs entirely on the seeded mock dataset (`src/data/seed.ts`, expanded from
 `sample-data/agentos-demo-data.json`) plus an in-memory store
 (`src/data/store.ts`) that resets on every process restart. Verified in this
 environment: `npm install`, `npm run typecheck`, `npm run lint`,
-`npm run test` (45/45), and `npm run build` (52 routes) all pass cleanly —
+`npm run test` (47/47), and `npm run build` (52 routes) all pass cleanly —
 see `BUILD_STATUS_V2.md` Milestone 0/12 for the exact commands run and
 issues fixed along the way.
 
@@ -103,12 +103,22 @@ scripts/                Sandbox-only verification tooling (see BUILD_STATUS.md)
 
 Ordered by what blocks a real production deployment first:
 
-1. **Persistence.** `src/data/store.ts` is in-memory and resets on every
-   process restart — nothing here survives a deploy. Pick a database
-   (03_GAP_ANALYSIS.md gap M), design the schema/migrations from the
-   `src/domain/` types (they're already normalized and DB-shaped), and
-   replace `store.ts`'s internals. Every other layer already goes through
-   `src/repositories/`, so this should be a contained swap.
+1. **Persistence — partially addressed, real database still needed.**
+   `src/data/store.ts` now survives a single-process restart: it hydrates
+   from (and periodically snapshots to) a local SQLite file via
+   `src/data/persistence.ts`, using Node's built-in `node:sqlite` — no new
+   dependency, gated off automatically during tests and `next build`.
+   Verified live: mutated a proposal via the real API, killed the server
+   process, confirmed a fresh restart, and the mutation was still there.
+   **This is a stopgap, not the production answer** — it's a single local
+   file, so it breaks on any multi-instance or serverless/edge deployment
+   (each instance would have its own file with no shared source of truth),
+   and it's a JSON blob snapshot, not a normalized schema. The real
+   decision — pick a database (03_GAP_ANALYSIS.md gap M), design the
+   schema/migrations from the `src/domain/` types (they're already
+   normalized and DB-shaped), and replace `store.ts`'s internals — is
+   still open. Every other layer already goes through `src/repositories/`,
+   so that swap should be contained.
 2. **Real authentication/SSO.** `src/lib/auth.ts` is a single hardcoded
    demo session. Pick a session/auth provider, and when you add it, wire
    `hasAtLeastRole`/`canUserApprove` role checks through real per-request
