@@ -25,7 +25,8 @@ export const PRIMARY_NAV: NavItem[] = [
 export const SETTINGS_NAV: NavItem[] = [
   { href: "/settings/integrations", label: "Integrations", icon: "⚙" },
   { href: "/settings/permissions", label: "Permissions", icon: "🔒" },
-  { href: "/settings/governance", label: "Governance", icon: "⚖" }
+  { href: "/settings/governance", label: "Governance", icon: "⚖" },
+  { href: "/settings/workflows", label: "Workflows", icon: "⇄" }
 ];
 
 export const MOBILE_NAV: NavItem[] = [

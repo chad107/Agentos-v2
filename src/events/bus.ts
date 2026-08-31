@@ -15,6 +15,7 @@ import type { CanonicalEventType, EventEnvelope } from "@/domain/events";
 import { makeId } from "@/lib/ids";
 import { now, toISO } from "@/lib/dates";
 import { getCurrentTenant } from "@/lib/tenant-context";
+import { dispatchEvent } from "./dispatcher";
 
 const events: EventEnvelope[] = [];
 
@@ -39,6 +40,7 @@ export function publishEvent(input: PublishEventInput): EventEnvelope {
     schemaVersion: 1
   };
   events.push(event);
+  dispatchEvent(event);
   return event;
 }
 

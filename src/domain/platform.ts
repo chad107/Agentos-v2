@@ -85,3 +85,23 @@ export interface WorkItem {
   dueAt: string | null;
   href: string;
 }
+
+/**
+ * A single recorded KPI value at a point in time — the minimum needed for
+ * the "Forecasting & trends" section of the Universal Division Workspace
+ * to eventually show a real trend instead of an empty state
+ * (01_MASTER_SPEC.md gap noted repeatedly in BUILD_STATUS_V2.md: no
+ * KPIObservation-shaped store existed before this). `value` stays a
+ * display string (matching `DivisionKpiValue`, src/repositories/divisions.ts)
+ * rather than a normalized number — this build has no numeric KPI model to
+ * observe, so history is recorded as-displayed, not fabricated as
+ * synthetic numeric time series.
+ */
+export interface KPIObservation {
+  id: string;
+  tenantId: string;
+  divisionKey: DivisionKey;
+  kpiLabel: string;
+  value: string;
+  observedAt: string;
+}

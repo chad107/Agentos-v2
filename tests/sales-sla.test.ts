@@ -28,13 +28,15 @@ function lead(overrides: Partial<Lead>): Lead {
 }
 
 describe("AT-05 — lead response SLA", () => {
-  it("defaults the tenant's sales response SLA to 120 minutes, configurable per company", () => {
-    expect(getTenantConfig().salesResponseSlaMinutes).toBe(120);
-    expect(salesResponseSlaMinutes()).toBe(120);
+  it("sets Valley River's sales response SLA to 60 minutes per 01_MASTER_SPEC.md ('business-day lead response <=60 minutes'), configurable per company", () => {
+    expect(getTenantConfig().salesResponseSlaMinutes).toBe(60);
+    expect(salesResponseSlaMinutes()).toBe(60);
   });
 
-  it("flags a business-day lead older than the configured SLA with no response as breached", () => {
-    const reference = new Date("2026-08-28T15:01:00.000Z"); // 1 minute past the 120-minute SLA
+  it("flags a business-day lead older than its own slaDueAt with no response as breached", () => {
+    // This lead's fixed slaDueAt (15:00) is independent of the tenant config —
+    // isSlaBreached only ever compares slaDueAt to the reference time.
+    const reference = new Date("2026-08-28T15:01:00.000Z"); // 1 minute past this lead's slaDueAt
     expect(isSlaBreached(lead({}), reference)).toBe(true);
   });
 
@@ -44,7 +46,7 @@ describe("AT-05 — lead response SLA", () => {
   });
 
   it("does not flag a lead still inside its SLA window", () => {
-    const reference = new Date("2026-08-28T13:30:00.000Z"); // 30 minutes in, well inside 120
+    const reference = new Date("2026-08-28T13:30:00.000Z"); // well before this lead's 15:00 slaDueAt
     expect(isSlaBreached(lead({}), reference)).toBe(false);
   });
 });

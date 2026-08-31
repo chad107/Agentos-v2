@@ -323,15 +323,44 @@ outcome-measurement UI/flow.
   inline) or `inactive` (marketing campaign factory, executive loop — no
   code implements these yet).
 
-**Not yet started (explicitly, not hidden):** there is no dispatch loop
-that routes a published event to a registered workflow handler — this is a
-registry and a log, not yet an orchestrator. `lead.created`/
-`quote.accepted`-style events also aren't published anywhere yet, because
-this build has no live intake pipeline that would produce them (recommendations/
-proposals are seeded, not generated at request time) — only
-`approval.resolved` is real. Building the dispatch loop and wiring more
-publish call sites is real future work, tracked here rather than implied
-by the registry's existence.
+**Update — dispatch loop added:** `src/events/dispatcher.ts`'s
+`dispatchEvent()` now runs on every `publishEvent()` call: it finds every
+`active`, event-triggered workflow whose `triggerEventType` matches, and
+records a `workflow.routed` audit entry for each match — a real routing
+decision, not a fabricated one. The Executive loop workflow was re-pointed
+to trigger on `approval.resolved` (`triggerType: "event"`, `status:
+"active"`) because its "decision/outcome record" step genuinely is
+implemented (Milestone 8's `src/repositories/decisions.ts`) — its
+Monitor/Analyze/Recommend/forecast/proposed-learning steps are not, and the
+workflow's own description says so explicitly. Verified end-to-end:
+`tests/event-dispatch.test.ts`, plus a live smoke test — `POST
+/api/approvals/:id/reject` on a running production build produced a real
+`workflow.routed` entry visible on `/settings/workflows`.
+
+New page: `/settings/workflows` — every registered workflow (status,
+trigger, owner division, description) plus the last 20 real routing
+decisions from the audit trail.
+
+**Milestone 2 gap partially closed — KPI observation history:**
+`src/domain/platform.ts` `KPIObservation` + `src/repositories/kpi-observations.ts`
++ `POST`/`GET /api/kpis` (the suggested API endpoint from `01_MASTER_SPEC.md`
+that didn't exist before). Recording is an explicit action, not a page-render
+side effect: `POST /api/kpis` snapshots every division's current, real KPI
+values (never a normalized/fabricated number — recorded exactly as
+displayed). The Universal Division Workspace's "Forecasting & trends"
+section now shows recorded observations when any exist, replacing the
+empty state. Verified live: a `POST` on a running build produced real
+snapshot rows that immediately rendered on `/divisions/sales`. Still not a
+forecast — it is observed history only, and there's no chart/trend-line
+UI yet, by design (small, honest step rather than a fabricated projection).
+
+**Still not started:** `lead.created`/`quote.accepted`-style events aren't
+published anywhere, because this build has no live intake pipeline that
+would produce them (recommendations/proposals are seeded, not generated at
+request time) — only `approval.resolved` is real. The dispatcher also only
+*routes* (records which workflow subscribes) — it does not execute a
+workflow's steps; doing that for real would mean building orchestration
+logic specific to each of the 7 canonical workflows, out of scope here.
 
 ---
 
@@ -358,6 +387,36 @@ vendor API capability exist for any of them.
 
 ---
 
+## Milestone 11 — Valley River workflow configuration: verified against spec text ✅ (one correction made)
+
+Every Valley River-specific rule in `01_MASTER_SPEC.md` "Divisions and
+agents" checked against the actual running code, file:line cited:
+
+| Rule (01_MASTER_SPEC.md wording) | Status | Evidence |
+|---|---|---|
+| Lead response ≤60 min (business-day) | **Fixed this milestone** | Was 120 min (`src/config/tenant.ts`) — a generic platform default, not a VRHP-specific one. Corrected to 60 after confirming with the user, since it reflows seeded lead timestamps/copy text. `src/data/seed.ts:42-43` already derives `SALES_SLA_MINUTES`/`SALES_SLA_HOURS` live from `getTenantConfig()`, and interpolates it into finding/recommendation copy (`seed.ts:265,266,344,1089`) — so the correction reflowed automatically with no seed data hand-edited. All 43 tests still pass; `tests/sales-sla.test.ts` updated to assert 60. |
+| Quotes normally ≤24h, max 48h | **Narrative only, not enforced** | `Lead.quoteSentAt`/`createdAt` exist and the new Sales division KPI (`src/repositories/divisions.ts` `salesSnapshot`) computes a real median quote-turnaround from them, but nothing flags or blocks a quote past 24/48h — no live quoting pipeline exists to enforce it against (seed data is static). |
+| Jobber auto follow-up after 2 days; manual day 3-4 | **Narrative only, not enforced** | `LeadStage` includes `"follow_up"` (`src/domain/entities.ts`) and seeded leads use it, but there's no computed day-count trigger — same root cause as above (no live pipeline). |
+| Accepted quote + ~50% deposit drives readiness | **Descriptive, not computed** | `Job.readinessStatus`/`readinessScore` are set directly in seed data (`src/data/seed.ts`), not derived from a live deposit-amount check. One knowledge note (`seed.ts:1026`) references the 50% figure narratively. No deposit-percentage field exists on any entity to compute against. |
+| Equipment/materials verified ≥3 business days before job | **Implemented** | `isWithinReadinessWindow()`, `src/repositories/operations.ts:29-32`, uses `businessDaysFromNow(3, reference)` — exact match. |
+| 4:00 PM CompanyCam closeout check | **Implemented** | Agent schedule string `"closeout_check (weekday 16:00)"`, `src/data/seed.ts:128`; Operations division's closeout tracking (`jobsWithMissingCloseout()`) reads the resulting `readinessStatus`. |
+| Daily JSA: Mon-Fri, primary Al / designee Aiden Brennan, 4:00 PM reminder, 4:30 PM escalation to Cohen | **Implemented** | `jsaCadenceStatus()`, `src/lib/jsa-cadence.ts` — pure function, reminder/escalation timestamps compared exactly; `tests/safety-jsa-cadence.test.ts` covers it. Al/Aiden Brennan are the seeded assignees (`src/data/seed.ts`). |
+| Monthly ladder inspection reminder | **Implemented** | `ladderInspections()`, `src/repositories/safety.ts`; agent schedule `"ladder_inspection_monitor (monthly)"`. |
+| AP due-soon reminder ~3 business days prior | **Implemented** | `billsDueSoon()`, `src/repositories/accounting.ts:8-13`, uses the same `businessDaysFromNow(3, reference)` helper. |
+| Never initiate bank payment | **Implemented (structurally, not just by policy)** | No `PaymentSender`/bank-write capability interface exists anywhere in `src/integrations/types.ts`; `resolvePostApprovalStatus()` (`src/approvals/engine.ts`) hard-codes `hasLiveWriteAdapter = false`, so no consequential proposal — including any accounting one — can ever auto-execute. |
+| Priority: Safety > Financial > Customer; urgent interrupts | **Implemented** | `CATEGORY_PRIORITY_ORDER`, `src/domain/enums.ts:20-27`, exact order; Cohen's tie-break (`src/cohen/orchestrate.ts`) ranks urgency before category, matching "urgent exceptions may interrupt." `tests/cohen-orchestrate.test.ts` covers ranking. |
+| 4:30 PM executive recap | **Not implemented** | No code, page, or scheduled artifact produces an executive recap at any time. Genuine gap — not fabricated as present. |
+| Full flagship entitlements for Valley River | **Implemented (Milestone 1)** | `getModuleEntitlements("vrhp")` returns all 8 divisions `active`/`flagship`; enforced by `tests/tenant-isolation.test.ts`. |
+
+**Human Review Required:** the lead-SLA correction above is a real business
+rule change now live in this build (60 min, not 120) — confirmed with the
+user before merging, but worth Valley River's owner independently
+double-checking against how they actually operate before this goes to
+production, since 03_GAP_ANALYSIS.md gap M means there is no real
+persistence/audit trail yet.
+
+---
+
 ## Milestone 12 — QA (partial: tenant isolation + agent registry tests) ✅
 
 **Completed:**
@@ -368,13 +427,16 @@ vendor API capability exist for any of them.
 - `tests/agent-registry.test.ts`: every seeded agent has exactly one
   registry entry mapped to a real division; no agent is classified
   `trusted_auto` or risk tier 4.
+- `tests/event-dispatch.test.ts`: a real `approval.resolved` event routes to
+  the Executive loop workflow and is recorded in the audit trail.
 - Full check suite green after every change in this session:
-  `npm run typecheck` (strict), `npm run lint`, `npm run test` (41/41
-  across 8 suites, up from 33/33), `npm run build` (51 routes, up from 41).
-  Production server smoke-tested (`next start`) against every new route
-  (`/work-queue`, `/agents/[id]`, `/settings/governance`, `/divisions/*`,
-  `/knowledge`, `/settings/integrations`) — all HTTP 200 with real
-  rendered data confirmed in the HTML, not just a successful build.
+  `npm run typecheck` (strict), `npm run lint`, `npm run test` (43/43
+  across 9 suites, up from 33/33), `npm run build` (52 routes, up from 41).
+  Production server smoke-tested (`next start`) against every new route,
+  including exercising real POST actions (`/api/approvals/:id/reject`,
+  `/api/kpis`) and confirming their effects render live on
+  `/settings/workflows` and the division Forecasting section — all HTTP 200
+  with real rendered/computed data, not just a successful build.
 
 **Not yet started:** a full security review pass (secrets/injection/rate
 limiting), an accessibility audit beyond what the existing components
@@ -387,22 +449,20 @@ Milestone 12 in the spec — see "Remaining work" below.
 
 Not attempted this session, and each large enough to warrant its own pass
 rather than a shallow stub:
-- **Milestone 2 (remainder)**: `Task` as a first-class persisted entity
-  (today's Work Queue is a read-model projection, not a stored task list);
-  `KPIObservation` history (nothing in this build can trend or forecast
-  without one — flagged repeatedly above); attaching knowledge-scope layers
-  to the actual `KnowledgeItem` records.
+- **Milestone 2 (remainder)**: `Task` as a first-class persisted entity —
+  today's Work Queue (Milestone 6) is a read-model projection over
+  approvals + tracked items, not a stored task list an agent could create
+  ad hoc; attaching knowledge-scope layers to the actual `KnowledgeItem`
+  records (the scope *types* exist, `KnowledgeItem` itself is unchanged).
+  `KPIObservation` history now exists (see Milestone 9 update above) but
+  only as raw observed values — no numeric normalization or charting.
 - **Milestone 4**: Marketing and Administration divisions remain data-free
   by design (Milestone 1) — building their real specialist logic (content
   drafting, SEO, document management, etc.) is substantial, agent-specific
   work, not a registry/config change.
-- **Milestone 9 (remainder)**: the actual event→workflow dispatch loop.
-- **Milestone 11**: the Valley River timing rules (lead SLA, quote timing,
-  50% deposit, 3-business-day readiness, JSA cadence, 4 PM closeout, AP
-  reminders, category priority order) are already implemented in v1 logic —
-  verified by file:line reference in Milestone 0's audit — but nothing this
-  session formally re-verified every one against the spec's exact wording
-  end-to-end with new tests beyond what already existed.
+- **Milestone 9 (remainder)**: no live event producers for
+  `lead.created`/`quote.accepted`-style events (no live intake pipeline
+  exists); the dispatcher routes but doesn't execute a workflow's steps.
 - **Milestone 12 (remainder)**: a dedicated security-review pass, a WCAG
   2.1 AA accessibility audit, and the final prioritized human-developer
   punch list / architecture notes / schema-migration plan called for in

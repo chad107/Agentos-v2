@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getDivisionConfig, DIVISIONS } from "@/config/divisions";
 import { divisionSnapshot, recommendationsForDivision, marketingIntelligencePreview } from "@/repositories/divisions";
+import { listKpiObservations } from "@/repositories/kpi-observations";
 import { Card, CardBody } from "@/components/ui/Card";
 import { KpiRow } from "@/components/ui/KpiRow";
 import { Badge } from "@/components/ui/Badge";
@@ -20,6 +21,7 @@ export default function DivisionWorkspacePage({ params }: { params: { key: strin
   if (!snapshot) notFound();
   const recommendations = recommendationsForDivision(config.key);
   const isMarketing = config.key === "marketing";
+  const observations = listKpiObservations({ divisionKey: config.key, limit: 10 });
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
@@ -109,10 +111,28 @@ export default function DivisionWorkspacePage({ params }: { params: { key: strin
       {/* 5. Forecasting / trends */}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-ink-900">Forecasting & trends</h2>
-        <EmptyState
-          title="Forecasting is not yet implemented."
-          hint="No historical KPI observation store exists yet to trend against — tracked as a gap, not shown as invented data."
-        />
+        {observations.length ? (
+          <Card>
+            <CardBody className="space-y-1.5 pt-4">
+              <p className="text-xs text-ink-500">
+                Recorded KPI snapshots (<code>POST /api/kpis</code>) — real observed values, not a forecast model.
+              </p>
+              <ul className="space-y-1">
+                {observations.map((o) => (
+                  <li key={o.id} className="text-xs text-ink-700">
+                    <span className="font-medium">{o.kpiLabel}:</span> {o.value}{" "}
+                    <span className="text-ink-400">— {new Date(o.observedAt).toLocaleString()}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardBody>
+          </Card>
+        ) : (
+          <EmptyState
+            title="No KPI history recorded yet."
+            hint={`Forecasting needs a real trend to work from. POST /api/kpis records one snapshot of every division's current KPI values; nothing is fabricated in the meantime.`}
+          />
+        )}
       </section>
 
       {/* 6. AI recommendations */}

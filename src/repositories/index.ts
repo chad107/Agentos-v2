@@ -16,3 +16,4 @@ export * from "./divisions";
 export * from "./events";
 export * from "./work-queue";
 export * from "./decisions";
+export * from "./kpi-observations";

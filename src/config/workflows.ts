@@ -109,13 +109,16 @@ export const WORKFLOWS: WorkflowDefinition[] = [
     key: "executive_loop",
     name: "Executive loop",
     description:
-      "Monitor -> Analyze -> Recommend -> policy evaluation -> Execute or request approval -> Observe -> Measure -> decision/outcome record -> proposed learning.",
-    triggerType: "schedule",
-    triggerEventType: null,
+      "Monitor -> Analyze -> Recommend -> policy evaluation -> Execute or request approval -> Observe -> Measure -> decision/outcome record -> proposed learning. Only the 'decision/outcome record' step is implemented today: every resolved approval is dispatched here (src/events/dispatcher.ts) and recorded as institutional memory (src/repositories/decisions.ts). Monitor/Analyze/Recommend/forecast/proposed-learning are not — see BUILD_STATUS_V2.md.",
+    triggerType: "event",
+    triggerEventType: "approval.resolved",
     ownerDivision: "executive_intelligence",
-    versions: [{ version: 1, createdAt: "2024-01-01T00:00:00.000Z", changeSummary: "Initial definition." }],
-    currentVersion: 1,
-    status: "inactive"
+    versions: [
+      { version: 1, createdAt: "2024-01-01T00:00:00.000Z", changeSummary: "Initial definition." },
+      { version: 2, createdAt: "2024-01-01T00:00:00.000Z", changeSummary: "Wired to approval.resolved events; decision-recording step implemented." }
+    ],
+    currentVersion: 2,
+    status: "active"
   }
 ];
 

@@ -34,7 +34,14 @@ const TENANT_CONFIGS: Record<string, TenantConfig> = {
     businessId: "vrhp",
     businessName: "Valley River Heat Pumps",
     timezone: "America/Halifax",
-    salesResponseSlaMinutes: DEFAULT_SALES_RESPONSE_SLA_MINUTES
+    // Company-specific override per 01_MASTER_SPEC.md "Divisions and agents"
+    // > Sales Division > Valley River rules: "business-day lead response
+    // <=60 minutes" — the v1 build had left this at the generic 120-minute
+    // platform default; corrected here per Milestone 11 verification
+    // (BUILD_STATUS_V2.md). Confirmed with the business owner before
+    // changing, since it reflows seeded lead timestamps/copy (both already
+    // derive live from this constant in src/data/seed.ts).
+    salesResponseSlaMinutes: 60
   }
 };
 
