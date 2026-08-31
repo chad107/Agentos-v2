@@ -417,7 +417,7 @@ persistence/audit trail yet.
 
 ---
 
-## Milestone 12 — QA (partial: tenant isolation + agent registry tests) ✅
+## Milestone 12 — QA (tenant isolation + agent registry tests, security review, handoff punch list) ✅
 
 **Completed:**
 - `tests/tenant-isolation.test.ts`: Valley River gets all 8 divisions
@@ -429,19 +429,50 @@ persistence/audit trail yet.
   `trusted_auto` or risk tier 4.
 - `tests/event-dispatch.test.ts`: a real `approval.resolved` event routes to
   the Executive loop workflow and is recorded in the audit trail.
+- **Security review** (subagent-driven, covering all 21 API routes, the
+  approval engine, event bus/dispatcher, tenant context, and a repo-wide
+  scan for dangerous sinks/secrets): no exploitable vulnerability found in
+  any code added this session — no injection sinks, no XSS (no
+  `dangerouslySetInnerHTML` anywhere), no hardcoded secrets, no tenant
+  fallback that grants unrecognized-tenant access, no way for the event
+  bus/dispatcher/KPI-observation code to construct or bypass-approve a
+  consequential action.
+  One real, concrete gap **found and fixed**: `canUserApprove()`
+  (`src/approvals/engine.ts`) existed but was never called anywhere —
+  `POST /api/approvals/:id/{approve,reject,clarify}` performed no role
+  check at all before deciding a proposal, unlike `/api/agents/:id/run`
+  and the new `/api/kpis`, which both correctly gate on `hasAtLeastRole`.
+  Currently inert in this build (`getCurrentUser()` is hardcoded to a
+  single owner-role demo session, so there's no reachable path to exploit
+  it today) but a real latent gap for whenever real per-request auth is
+  added. Fixed: all three routes now fetch the proposal and call
+  `canUserApprove(user.role, proposal.approverRole)`, returning 403
+  otherwise — matching the sibling routes' pattern exactly. Covered by two
+  new unit tests in `tests/approvals-engine.test.ts`; smoke-tested live
+  (`POST /api/approvals/:id/approve` on a running build still succeeds for
+  the demo owner user, confirming the gate doesn't break the legitimate
+  path).
+- **Human-developer handoff punch list**: added to `README.md`
+  ("Human-developer punch list (prioritized)") — persistence, real
+  auth/SSO, multi-tenant storage, real integration adapters, Marketing/
+  Administration division build-out, event/workflow orchestration,
+  accessibility audit, KPI forecasting, in priority order with the exact
+  files each one touches.
 - Full check suite green after every change in this session:
-  `npm run typecheck` (strict), `npm run lint`, `npm run test` (43/43
+  `npm run typecheck` (strict), `npm run lint`, `npm run test` (45/45
   across 9 suites, up from 33/33), `npm run build` (52 routes, up from 41).
   Production server smoke-tested (`next start`) against every new route,
-  including exercising real POST actions (`/api/approvals/:id/reject`,
+  including exercising real POST actions (`/api/approvals/:id/{approve,reject}`,
   `/api/kpis`) and confirming their effects render live on
   `/settings/workflows` and the division Forecasting section — all HTTP 200
   with real rendered/computed data, not just a successful build.
 
-**Not yet started:** a full security review pass (secrets/injection/rate
-limiting), an accessibility audit beyond what the existing components
-already do, and the human-developer handoff punch list called for by
-Milestone 12 in the spec — see "Remaining work" below.
+**Not yet started:** a formal WCAG 2.1 AA accessibility audit (components
+use semantic HTML and the existing design system throughout, but no
+dedicated pass has been done); dependency-vulnerability triage (`npm
+audit` reported 10 pre-existing advisories in transitive dev dependencies
+at Milestone 0, not investigated further — out of scope for an
+application-code security review).
 
 ---
 
@@ -463,12 +494,11 @@ rather than a shallow stub:
 - **Milestone 9 (remainder)**: no live event producers for
   `lead.created`/`quote.accepted`-style events (no live intake pipeline
   exists); the dispatcher routes but doesn't execute a workflow's steps.
-- **Milestone 12 (remainder)**: a dedicated security-review pass, a WCAG
-  2.1 AA accessibility audit, and the final prioritized human-developer
-  punch list / architecture notes / schema-migration plan called for in
-  `CLAUDE.md` "Final handoff" — persistence and auth are still explicitly
-  out of scope pending a human infrastructure decision (03_GAP_ANALYSIS.md
-  gap M).
+- **Milestone 12 (remainder)**: a formal WCAG 2.1 AA accessibility audit,
+  and dependency-vulnerability triage of the 10 pre-existing `npm audit`
+  advisories. Persistence and auth are still explicitly out of scope
+  pending a human infrastructure decision (03_GAP_ANALYSIS.md gap M) — the
+  punch list for exactly that is now in `README.md`.
 
 ---
 

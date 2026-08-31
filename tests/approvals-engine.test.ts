@@ -6,6 +6,7 @@ import {
   requestClarification,
   resolveClarification,
   assertProposalIsPermitted,
+  canUserApprove,
   ApprovalPolicyError
 } from "@/approvals/engine";
 import { isProhibitedActionType, PROHIBITED_ACTION_TYPES } from "@/approvals/prohibited";
@@ -104,5 +105,18 @@ describe("AT-02 — approval gating: nothing executes live in this build", () =>
   it("refuses to decide a proposal that is already terminal", () => {
     const proposal = baseProposal({ status: "rejected" });
     expect(() => approveProposal(proposal, "u_owner")).toThrow(ApprovalPolicyError);
+  });
+});
+
+describe("canUserApprove — role gate (found wired into no API route by a Milestone 12 security review; now wired into POST /api/approvals/:id/{approve,reject,clarify})", () => {
+  it("allows every approver-eligible role", () => {
+    for (const role of ["owner", "operator", "administrator", "install_manager"] as const) {
+      expect(canUserApprove(role, "administrator")).toBe(true);
+    }
+  });
+
+  it("refuses staff and read_only, regardless of the proposal's required role", () => {
+    expect(canUserApprove("staff", "administrator")).toBe(false);
+    expect(canUserApprove("read_only", "administrator")).toBe(false);
   });
 });
