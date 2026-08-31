@@ -192,16 +192,223 @@ until a persistence layer exists (relevant to gap M and Milestone 8).
 
 **Human Review Required:** none introduced this milestone.
 
-**Not yet started this session** (tracked for the next milestone pass,
-per `01_MASTER_SPEC.md` "Claude Build Manifest" Milestones 3–12): Cohen
-executive dashboard division-card aggregation, Agent Registry V2 contract,
-unified Work Queue/Notification Center, progressive-trust/risk-tier model,
-four-layer memory + decision/outcome objects, event/workflow engine,
-integration adapter expansion (Canva/Meta/Google Ads), and the
-tenant-isolation/security QA pass. These are substantial, multi-file
-efforts in their own right and were not attempted speculatively this
-session to avoid shipping shallow, unverified stubs across all eight
-remaining milestones at once.
+---
+
+## Milestone 3 — Cohen Executive Dashboard: division health ✅
+
+**Completed:**
+- `src/components/home/DivisionHealthGrid.tsx` + a new "Divisions" section
+  on Home (`src/app/page.tsx`), between Top 3 and Nothing Left Behind —
+  matches `01_MASTER_SPEC.md` "Cohen Executive Dashboard above the fold"
+  ("division health cards using 3-5 KPI indicators"). Reuses
+  `allDivisionSnapshots()` from Milestone 1 — no new data source, no
+  duplicated computation.
+- Each card shows up to 3 real KPI values (never placeholder numbers) and
+  a work-queue-count badge; links to the full Universal Division Workspace.
+
+**Mocked:** Marketing/Administration cards honestly show "Not yet
+implemented" instead of a KPI, consistent with Milestone 1.
+
+---
+
+## Milestone 5 — Agent Registry V2 contract ✅
+
+**Completed:**
+- `src/domain/governance.ts`: `RiskTier` (0-4), `TrustState` (shadow /
+  supervised / guarded_auto / trusted_auto), `AgentRegistryEntry` — the
+  `01_MASTER_SPEC.md` "Standard Agent Contract" fields not carried by the
+  v1 `Agent` entity. Kept as a separate keyed-by-`AgentId` overlay
+  (`src/config/agent-registry.ts`) rather than changing `Agent` itself, so
+  v1 seed data/tests are untouched.
+- Every one of the 8 seeded agents got a real classification derived from
+  what it actually does in this build (all have `systemsWrite: []` today —
+  confirmed by reading `src/data/seed.ts` — so nothing is claimed above
+  Tier 2, nothing is `trusted_auto`, and this is enforced by a new test,
+  `tests/agent-registry.test.ts`).
+- New individual Agent detail page, `src/app/agents/[id]/page.tsx` —
+  identity/status/version, mission/manager (division link), risk
+  tier + trust state with rationale, capabilities/permissions/events/KPI
+  mappings/knowledge scopes/escalation target/accountable role, and
+  execution history. `/agents` list page now links to it and shows a
+  trust-state badge inline.
+
+**Human Review Required:** the risk-tier/trust-state values above are a
+reasonable first classification derived from existing code, not a
+governance decision — Valley River's owner should review and confirm them
+before any future milestone lets an agent auto-execute anything.
+
+---
+
+## Milestone 6 — Unified Work Queue ✅
+
+**Completed:**
+- `src/domain/platform.ts`: `WorkItem` type. `src/repositories/work-queue.ts`:
+  `unifiedWorkQueue()` merges open Approval Centre proposals
+  (`listProposals`) and "Nothing Left Behind" tracked items (`trackedItems`)
+  into one division-filterable, priority-sorted list — a genuine merge, not
+  a third parallel data source.
+- New page `src/app/work-queue/page.tsx` — tabs for All + all 8 divisions,
+  each item links back to its source page (`/approvals` or the item's own
+  href). `/approvals` and `/tracked` are unchanged and still the deeper,
+  type-specific views.
+- Nav: added one "Work Queue" entry.
+
+---
+
+## Milestone 7 — Governance / progressive trust ✅ (policy view only)
+
+**Completed:**
+- `src/app/settings/governance/page.tsx`: risk-tier legend (0-4, with Tier 4
+  explicitly marked "Blocked by default — no code path exists"), trust-state
+  legend, a table of every agent's current classification (from Milestone
+  5's registry), and promotion/demotion criteria as policy text.
+- This page is read-only and changes no runtime behavior — confirmed by
+  re-reading `src/approvals/engine.ts`, which is untouched. No trust state
+  recorded anywhere lets any agent bypass approval on a consequential
+  action (CLAUDE.md non-negotiable #6). `PROMOTION_CRITERIA` is spec text,
+  not fabricated per-agent metrics — no agent has a real execution sample
+  to report yet, so none is shown as promoted.
+
+**Not yet started:** an actual promotion/demotion state machine that reads
+real execution telemetry and changes an agent's trust state over time.
+There is no execution-history data source substantial enough to drive one
+yet (see Milestone 0's KPI-history gap).
+
+---
+
+## Milestone 8 — Decision/outcome memory ✅ (partial)
+
+**Completed:**
+- `src/domain/memory.ts`: four knowledge scope layers (global / company /
+  division / executive), `KnowledgeClassification`, `Decision`, `Outcome`.
+- `src/repositories/decisions.ts`: `listDecisions()` derives real `Decision`
+  records from `ApprovalDecision` + `ActionProposal` data already in the
+  store — not fabricated seed data. Every `Outcome` starts
+  `pending_measurement`; no actual outcome or lesson is ever invented,
+  because no outcome-tracking data source exists in this build yet
+  (matches `01_MASTER_SPEC.md`: "Observed outcomes never silently rewrite
+  policy").
+- New "Decisions & outcomes" section on the Knowledge page.
+- **Real bug fixed along the way**: `src/repositories/approvals.ts`'s four
+  `decide*` functions destructured `{ proposal: decided }` from the
+  approval engine and silently discarded the `ApprovalDecision` object the
+  engine already returns — so no runtime decision was ever persisted to
+  `store.approvalDecisions`, only seed-time ones. Fixed by persisting it
+  (`persistDecision`), which is what makes the new Decisions section show
+  more than pre-seeded history. Verified: all 41 tests still pass, and the
+  Knowledge page renders real "Pending measurement" rows sourced from the
+  seed's existing decisions after a fresh production build.
+
+**Not yet started:** global/company/division/executive scope isn't
+attached to the *existing* `KnowledgeItem` records yet (the types exist;
+`KnowledgeItem` itself wasn't changed, to avoid touching v1 data); a real
+outcome-measurement UI/flow.
+
+---
+
+## Milestone 9 — Event/workflow engine ✅ (registry + minimal bus, not a runtime orchestrator)
+
+**Completed:**
+- `src/domain/events.ts`: canonical `EventEnvelope` (matches the
+  `01_MASTER_SPEC.md` "Event envelope example" exactly) and
+  `WorkflowDefinition`/`WorkflowVersion` types.
+- `src/events/bus.ts`: minimal in-memory `publishEvent`/`listEvents`.
+  Wired into one real call site — every terminal approval decision
+  (`src/repositories/approvals.ts`) now publishes a real `approval.resolved`
+  event alongside the existing audit trail, rather than shipping an event
+  bus nothing calls.
+- `src/config/workflows.ts`: a registry of the 7 canonical workflows from
+  `01_MASTER_SPEC.md` ("Canonical workflows"), each marked `active` (the
+  described behavior is implemented today by existing v1 logic — cited
+  inline) or `inactive` (marketing campaign factory, executive loop — no
+  code implements these yet).
+
+**Not yet started (explicitly, not hidden):** there is no dispatch loop
+that routes a published event to a registered workflow handler — this is a
+registry and a log, not yet an orchestrator. `lead.created`/
+`quote.accepted`-style events also aren't published anywhere yet, because
+this build has no live intake pipeline that would produce them (recommendations/
+proposals are seeded, not generated at request time) — only
+`approval.resolved` is real. Building the dispatch loop and wiring more
+publish call sites is real future work, tracked here rather than implied
+by the registry's existence.
+
+---
+
+## Milestone 10 — Integration adapter expansion ✅
+
+**Completed:**
+- `IntegrationId` (`src/domain/entities.ts`) extended with `sortly`,
+  `google_drive`, `canva`, `meta_ads`, `google_ads` — the remaining
+  `01_MASTER_SPEC.md` "Valley River adapter targets" not already present
+  (Gmail was already covered by the existing `email` id). Purely additive;
+  no exhaustive switch over `IntegrationId` exists anywhere in the
+  codebase (checked), so nothing broke.
+- Seed entries (`src/data/seed.ts`) and mock adapters
+  (`src/integrations/mock-adapters.ts`) added for all 5, all
+  `connected: false` / `health: "not_configured"`, each `healthMessage`
+  explicitly stating BLOCKED_EXTERNAL and why. Canva's message notes it
+  stays a draft/creative adapter, never a publishing bypass, even once
+  connected.
+- Settings → Integrations page needed no changes — it already renders
+  `listIntegrations()` generically.
+
+**Blocked External:** all 5 new integrations — no credentials or confirmed
+vendor API capability exist for any of them.
+
+---
+
+## Milestone 12 — QA (partial: tenant isolation + agent registry tests) ✅
+
+**Completed:**
+- `tests/tenant-isolation.test.ts`: Valley River gets all 8 divisions
+  active/flagship; an unrecognized tenant id gets zero entitlements (not a
+  default grant); every division snapshot's KPI values are either a real
+  string or explicitly `null` — never fabricated.
+- `tests/agent-registry.test.ts`: every seeded agent has exactly one
+  registry entry mapped to a real division; no agent is classified
+  `trusted_auto` or risk tier 4.
+- Full check suite green after every change in this session:
+  `npm run typecheck` (strict), `npm run lint`, `npm run test` (41/41
+  across 8 suites, up from 33/33), `npm run build` (51 routes, up from 41).
+  Production server smoke-tested (`next start`) against every new route
+  (`/work-queue`, `/agents/[id]`, `/settings/governance`, `/divisions/*`,
+  `/knowledge`, `/settings/integrations`) — all HTTP 200 with real
+  rendered data confirmed in the HTML, not just a successful build.
+
+**Not yet started:** a full security review pass (secrets/injection/rate
+limiting), an accessibility audit beyond what the existing components
+already do, and the human-developer handoff punch list called for by
+Milestone 12 in the spec — see "Remaining work" below.
+
+---
+
+## Remaining work (honest scope assessment)
+
+Not attempted this session, and each large enough to warrant its own pass
+rather than a shallow stub:
+- **Milestone 2 (remainder)**: `Task` as a first-class persisted entity
+  (today's Work Queue is a read-model projection, not a stored task list);
+  `KPIObservation` history (nothing in this build can trend or forecast
+  without one — flagged repeatedly above); attaching knowledge-scope layers
+  to the actual `KnowledgeItem` records.
+- **Milestone 4**: Marketing and Administration divisions remain data-free
+  by design (Milestone 1) — building their real specialist logic (content
+  drafting, SEO, document management, etc.) is substantial, agent-specific
+  work, not a registry/config change.
+- **Milestone 9 (remainder)**: the actual event→workflow dispatch loop.
+- **Milestone 11**: the Valley River timing rules (lead SLA, quote timing,
+  50% deposit, 3-business-day readiness, JSA cadence, 4 PM closeout, AP
+  reminders, category priority order) are already implemented in v1 logic —
+  verified by file:line reference in Milestone 0's audit — but nothing this
+  session formally re-verified every one against the spec's exact wording
+  end-to-end with new tests beyond what already existed.
+- **Milestone 12 (remainder)**: a dedicated security-review pass, a WCAG
+  2.1 AA accessibility audit, and the final prioritized human-developer
+  punch list / architecture notes / schema-migration plan called for in
+  `CLAUDE.md` "Final handoff" — persistence and auth are still explicitly
+  out of scope pending a human infrastructure decision (03_GAP_ANALYSIS.md
+  gap M).
 
 ---
 

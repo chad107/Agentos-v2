@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { homeSnapshot } from "@/repositories";
+import { homeSnapshot, allDivisionSnapshots } from "@/repositories";
 import { RecommendationCard } from "@/components/recommendations/RecommendationCard";
 import { NothingLeftBehind } from "@/components/home/NothingLeftBehind";
 import { NeedsAttention } from "@/components/home/NeedsAttention";
 import { HealthStrip } from "@/components/home/HealthStrip";
 import { TodaysOperations } from "@/components/home/TodaysOperations";
 import { AgentTiles } from "@/components/home/AgentTiles";
+import { DivisionHealthGrid } from "@/components/home/DivisionHealthGrid";
 
 /**
  * Home hierarchy (V2 spec, "Redesign the Home hierarchy"):
@@ -16,6 +17,7 @@ import { AgentTiles } from "@/components/home/AgentTiles";
  */
 export default function HomePage() {
   const snapshot = homeSnapshot();
+  const divisions = allDivisionSnapshots();
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -40,6 +42,18 @@ export default function HomePage() {
         ) : (
           <p className="text-sm text-ink-500">Nothing urgent is unresolved. Check Approvals for routine items.</p>
         )}
+      </section>
+
+      <section aria-labelledby="divisions-heading" className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 id="divisions-heading" className="text-lg font-semibold text-ink-900">
+            Divisions
+          </h2>
+          <Link href="/divisions" className="text-sm font-medium text-brand-700 hover:underline">
+            Open all divisions →
+          </Link>
+        </div>
+        <DivisionHealthGrid snapshots={divisions} />
       </section>
 
       <section aria-labelledby="nlb-heading" className="space-y-3">

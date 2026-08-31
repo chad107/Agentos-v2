@@ -1,8 +1,11 @@
+import Link from "next/link";
 import { listAgents, runsForAgent } from "@/repositories";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
-import { StatusPill } from "@/components/ui/Badge";
+import { Badge, StatusPill } from "@/components/ui/Badge";
 import { AgentRunButton } from "@/components/agents/AgentRunButton";
 import { AGENT_STATUS_COPY } from "@/domain";
+import { getAgentRegistryEntry } from "@/config/agent-registry";
+import { TRUST_STATE_LABELS } from "@/domain/governance";
 
 const toneFor: Record<string, "good" | "attention" | "urgent" | "info"> = {
   idle: "info",
@@ -29,13 +32,19 @@ export default function AgentsPage() {
       <div className="space-y-4">
         {agents.map((agent) => {
           const runs = runsForAgent(agent.id).slice(0, 3);
+          const registryEntry = getAgentRegistryEntry(agent.id);
           return (
             <Card key={agent.id}>
               <CardHeader>
                 <div>
-                  <div className="mb-1 flex items-center gap-2">
-                    <h2 className="text-base font-semibold text-ink-900">{agent.name}</h2>
+                  <div className="mb-1 flex flex-wrap items-center gap-2">
+                    <Link href={`/agents/${agent.id}`} className="text-base font-semibold text-ink-900 hover:underline">
+                      {agent.name}
+                    </Link>
                     <StatusPill tone={toneFor[agent.status] ?? "info"}>{AGENT_STATUS_COPY[agent.status]}</StatusPill>
+                    {registryEntry ? (
+                      <Badge className="bg-surface-muted text-ink-700">{TRUST_STATE_LABELS[registryEntry.trustState]}</Badge>
+                    ) : null}
                   </div>
                   <p className="text-sm text-ink-500">{agent.mission}</p>
                 </div>

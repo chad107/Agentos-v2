@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { listKnowledgeItems } from "@/repositories";
+import { listDecisions } from "@/repositories/decisions";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { EmptyState } from "@/components/ui/EmptyState";
 import type { KnowledgeItem, KnowledgeItemType } from "@/domain";
 
 const typeLabels: Record<KnowledgeItemType, string> = {
@@ -21,6 +23,7 @@ const statusStyles: Record<KnowledgeItem["status"], string> = {
 
 export default function KnowledgePage() {
   const items = listKnowledgeItems();
+  const decisions = listDecisions();
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -58,6 +61,42 @@ export default function KnowledgePage() {
           </Card>
         ))}
       </div>
+
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold text-ink-900">Decisions & outcomes</h2>
+          <p className="text-sm text-ink-500">
+            Institutional memory of approved/rejected consequential decisions. Outcomes are never invented — every
+            decision starts unmeasured until this build has a real source of observed results to measure against.
+          </p>
+        </div>
+        {decisions.length ? (
+          <div className="space-y-3">
+            {decisions.map((decision) => {
+              return (
+                <Card key={decision.id}>
+                  <CardBody className="space-y-1.5 pt-4">
+                    <p className="text-sm font-semibold text-ink-900">{decision.title}</p>
+                    <p className="text-xs text-ink-500">{decision.rationale}</p>
+                    <p className="text-xs text-ink-400">Expected: {decision.expectedOutcome}</p>
+                    <div className="flex items-center gap-2 pt-1">
+                      <Badge className="bg-surface-muted text-ink-500">Pending measurement</Badge>
+                      <span className="text-xs text-ink-400">
+                        Decided {new Date(decision.decidedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </CardBody>
+                </Card>
+              );
+            })}
+          </div>
+        ) : (
+          <EmptyState
+            title="No decisions recorded yet."
+            hint="Approve or reject a proposal in the Approval Centre to see it here."
+          />
+        )}
+      </section>
     </div>
   );
 }

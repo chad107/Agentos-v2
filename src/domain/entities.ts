@@ -73,7 +73,14 @@ export interface AgentRun {
   error: string | null;
 }
 
-/** integration id, e.g. "jobber" | "qbo" | "google_calendar" | "ringcentral" | ... */
+/**
+ * integration id, e.g. "jobber" | "qbo" | "google_calendar" | "ringcentral" | ...
+ * `sortly`, `google_drive`, `canva`, `meta_ads`, `google_ads` added for the
+ * V2 "Valley River adapter targets" list (01_MASTER_SPEC.md) — all ship
+ * disconnected/not_configured (src/data/seed.ts) since no credentials or
+ * confirmed vendor capability exist in this build; see BLOCKED_EXTERNAL in
+ * their `healthMessage`.
+ */
 export type IntegrationId =
   | "jobber"
   | "qbo"
@@ -84,7 +91,12 @@ export type IntegrationId =
   | "website_forms"
   | "facebook_leads"
   | "google_reviews"
-  | "knowledge_base";
+  | "knowledge_base"
+  | "sortly"
+  | "google_drive"
+  | "canva"
+  | "meta_ads"
+  | "google_ads";
 
 export interface SourceRecord {
   id: string;

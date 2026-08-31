@@ -63,3 +63,25 @@ export interface DivisionConfig {
   legacyRoute: string | null;
   dataStatus: DivisionDataStatus;
 }
+
+/**
+ * Unified Work Queue item (01_MASTER_SPEC.md "Work Queue: unified task
+ * model with division/agent/owner/priority/status/due/customer-job/risk/
+ * approval filters"). This is a read-model projection over the existing
+ * `ActionProposal` (Approval Centre) and "Nothing Left Behind" tracked-item
+ * data — see src/repositories/work-queue.ts. It does not replace either
+ * source; it presents them together, filterable by division, in one place.
+ */
+export type WorkItemKind = "approval" | "tracked";
+
+export interface WorkItem {
+  id: string;
+  kind: WorkItemKind;
+  division: DivisionKey | null;
+  priority: "urgent" | "high" | "normal" | "low";
+  title: string;
+  detail: string;
+  status: string;
+  dueAt: string | null;
+  href: string;
+}

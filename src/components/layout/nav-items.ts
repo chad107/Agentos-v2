@@ -8,6 +8,7 @@ export interface NavItem {
 export const PRIMARY_NAV: NavItem[] = [
   { href: "/", label: "Home", icon: "⌂" },
   { href: "/divisions", label: "Divisions", icon: "▦" },
+  { href: "/work-queue", label: "Work Queue", icon: "☰" },
   { href: "/approvals", label: "Approvals", icon: "✓" },
   { href: "/tracked", label: "Nothing Left Behind", icon: "◐" },
   { href: "/sales", label: "Sales", icon: "◎" },
@@ -23,7 +24,8 @@ export const PRIMARY_NAV: NavItem[] = [
 
 export const SETTINGS_NAV: NavItem[] = [
   { href: "/settings/integrations", label: "Integrations", icon: "⚙" },
-  { href: "/settings/permissions", label: "Permissions", icon: "🔒" }
+  { href: "/settings/permissions", label: "Permissions", icon: "🔒" },
+  { href: "/settings/governance", label: "Governance", icon: "⚖" }
 ];
 
 export const MOBILE_NAV: NavItem[] = [

@@ -256,3 +256,24 @@ export function recommendationsForDivision(key: DivisionKey): Recommendation[] {
   if (!category) return [];
   return listRecommendations().filter((r) => r.category === category && r.status !== "dismissed" && r.status !== "resolved");
 }
+
+/** Reverse of the category map above — used by the unified Work Queue (src/repositories/work-queue.ts) to place an approval proposal into its division. */
+export function divisionForRecommendationCategory(category: RecommendationCategory): DivisionKey | null {
+  const entry = (Object.entries(DIVISION_TO_RECOMMENDATION_CATEGORY) as [DivisionKey, RecommendationCategory][]).find(
+    ([, c]) => c === category
+  );
+  return entry ? entry[0] : null;
+}
+
+/** Maps a "Nothing Left Behind" tracked item's `area` label to a division key. */
+export function divisionForTrackedArea(area: string): DivisionKey | null {
+  const map: Record<string, DivisionKey> = {
+    Sales: "sales",
+    Operations: "operations",
+    Safety: "safety",
+    Accounting: "finance",
+    Customers: "customer_experience",
+    Voice: "customer_experience"
+  };
+  return map[area] ?? null;
+}

@@ -47,6 +47,19 @@ export const facebookLeadsAdapter = makeMockAdapter("facebook_leads", "Facebook 
 export const googleReviewsAdapter = makeMockAdapter("google_reviews", "Google reviews", false);
 export const knowledgeBaseAdapter = makeMockAdapter("knowledge_base", "Knowledge base", true);
 
+/**
+ * Marketing/creative + advertising adapter targets (01_MASTER_SPEC.md
+ * "Valley River adapter targets"). All disconnected — no credentials or
+ * confirmed vendor capability exist in this build (BLOCKED_EXTERNAL,
+ * src/data/seed.ts). Canva is a draft/creative adapter only, per spec
+ * never a bypass around approval policy even once connected.
+ */
+export const sortlyAdapter = makeMockAdapter("sortly", "Sortly", false);
+export const googleDriveAdapter = makeMockAdapter("google_drive", "Google Drive", false);
+export const canvaAdapter = makeMockAdapter("canva", "Canva", false);
+export const metaAdsAdapter = makeMockAdapter("meta_ads", "Meta advertising", false);
+export const googleAdsAdapter = makeMockAdapter("google_ads", "Google advertising", false);
+
 export const allAdapters: IntegrationAdapter[] = [
   jobberAdapter,
   qboAdapter,
@@ -57,5 +70,10 @@ export const allAdapters: IntegrationAdapter[] = [
   websiteFormsAdapter,
   facebookLeadsAdapter,
   googleReviewsAdapter,
-  knowledgeBaseAdapter
+  knowledgeBaseAdapter,
+  sortlyAdapter,
+  googleDriveAdapter,
+  canvaAdapter,
+  metaAdsAdapter,
+  googleAdsAdapter
 ];
