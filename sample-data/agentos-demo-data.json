@@ -1,0 +1,91 @@
+{
+  "business": {"id": "vrhp", "name": "Valley River Heat Pumps", "timezone": "America/Halifax"},
+  "cohen": {
+    "status": "monitoring",
+    "message": "Good morning. I found 3 decisions worth your attention."
+  },
+  "recommendations": [
+    {
+      "id": "rec_001",
+      "rank": 1,
+      "priority": "high",
+      "category": "operations",
+      "title": "Confirm equipment for tomorrow's install",
+      "summary": "The Jobber job is scheduled tomorrow, but the outdoor-unit shipment is not confirmed.",
+      "whyItMatters": "A missed shipment could delay the install and create a same-day customer issue.",
+      "impact": {"type": "risk", "label": "Install delay risk"},
+      "confidence": "high",
+      "confidenceReason": "Jobber job and equipment checklist agree; shipment confirmation is missing.",
+      "sourceRefs": ["jobber:job_2048", "ops:req_8801"],
+      "decisionRequired": "Approve supplier follow-up draft",
+      "status": "action_pending"
+    },
+    {
+      "id": "rec_002",
+      "rank": 2,
+      "priority": "high",
+      "category": "sales",
+      "title": "Follow up a high-value quote today",
+      "summary": "A heat-pump installation quote has passed the normal follow-up window with no customer response.",
+      "whyItMatters": "The opportunity is still active and a timely follow-up may protect the sale.",
+      "impact": {"type": "revenue", "label": "Revenue opportunity"},
+      "confidence": "medium",
+      "confidenceReason": "Jobber shows no response after the most recent quote activity.",
+      "sourceRefs": ["jobber:quote_7781"],
+      "decisionRequired": "Approve or edit follow-up message",
+      "status": "action_pending"
+    },
+    {
+      "id": "rec_003",
+      "rank": 3,
+      "priority": "normal",
+      "category": "financial",
+      "title": "Review vendor bill due in 3 business days",
+      "summary": "A vendor invoice has been captured and is approaching its due date.",
+      "whyItMatters": "Reviewing it now reduces the chance of a missed bill or duplicate entry.",
+      "impact": {"type": "financial", "label": "Payment timing"},
+      "confidence": "high",
+      "confidenceReason": "Invoice email and accounting record reference match.",
+      "sourceRefs": ["email:msg_991", "qbo:vendor_gree"],
+      "decisionRequired": "Review prepared bill data",
+      "status": "action_pending"
+    }
+  ],
+  "attention": {
+    "urgentExceptions": 0,
+    "pendingApprovals": 4,
+    "jobsAtRisk": 1,
+    "leadsOutsideSla": 1,
+    "safetyEvidenceMissing": 0,
+    "billsDueSoon": 1
+  },
+  "health": [
+    {"area": "Sales", "status": "attention", "label": "1 lead outside SLA"},
+    {"area": "Operations", "status": "attention", "label": "1 job at risk"},
+    {"area": "Safety", "status": "good", "label": "All current JSA evidence accounted for"},
+    {"area": "Accounting", "status": "attention", "label": "1 bill due soon"},
+    {"area": "Customers", "status": "good", "label": "No urgent unresolved cases"}
+  ],
+  "jobs": [
+    {
+      "id": "job_2048",
+      "jobberId": "2048",
+      "customer": "Demo Customer",
+      "community": "Kentville",
+      "scheduledStart": "2026-08-29T08:00:00-03:00",
+      "crew": ["Al", "Aiden"],
+      "readinessStatus": "at_risk",
+      "readinessScore": 82,
+      "missing": ["Outdoor unit shipment confirmation"]
+    }
+  ],
+  "agents": [
+    {"id": "sales", "name": "Sales + Lead Agent", "status": "monitoring", "openFindings": 2},
+    {"id": "operations", "name": "Operations Agent", "status": "needs_human", "openFindings": 1},
+    {"id": "safety", "name": "Safety & Compliance Agent", "status": "monitoring", "openFindings": 0},
+    {"id": "accounting", "name": "Accounting Agent", "status": "monitoring", "openFindings": 1},
+    {"id": "customer", "name": "Customer Agent", "status": "monitoring", "openFindings": 0},
+    {"id": "voice", "name": "Voice Agent", "status": "paused", "openFindings": 0},
+    {"id": "knowledge", "name": "Knowledge / SOP Agent", "status": "monitoring", "openFindings": 1}
+  ]
+}
