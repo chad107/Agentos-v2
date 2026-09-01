@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
-import { TRACKED_CATEGORY_ICONS, TRACKED_CATEGORY_LABELS, type TrackedCounts } from "@/repositories/tracked";
+import { TRACKED_CATEGORY_ICONS, TRACKED_CATEGORY_LABELS, type TrackedCounts } from "@/core";
 
 const SUMMARY_ORDER: (keyof Omit<TrackedCounts, "total" | "upcoming">)[] = [
   "overdue",

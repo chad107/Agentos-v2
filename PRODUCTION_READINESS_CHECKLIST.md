@@ -8,39 +8,58 @@ secure, commercially-deployable AgentOS.
 
 ## Lane 1 — Claude-safe implementation (no external credentials, no owner decision needed)
 
-Work that's genuinely safe for an AI agent (this session or a future one)
-to pick up directly — additive, testable, reversible, no infrastructure or
-business decision required.
+Work that's genuinely safe for an AI agent to pick up directly —
+additive, testable, reversible, no infrastructure or business decision
+required. **All items below were completed in Phase 3A — see
+`BUILD_STATUS_V2.md` "Phase 3A — Production Foundation Preparation" for
+the full detail and verification evidence behind each one.**
 
-- [ ] Add zod (or equivalent) request-body schema validation to each API
-      route, starting with the write-capable ones (`SECURITY_ARCHITECTURE.md`
-      "Input validation").
-- [ ] Add `db/migrations/000X_...sql` for `integration_credentials` once
-      the token-storage design (`INTEGRATION_SECURITY.md`) is chosen — the
-      table shape can be written and tested against real Postgres now,
-      encryption-at-rest specifics can follow.
-- [ ] Write the sanitized generic seed dataset for external-developer local
-      dev (`HUMAN_DEVELOPER_HANDOFF.md` "Sanitized local-dev seed data").
+- [x] Add zod request-body schema validation to each API route, starting
+      with the write-capable ones (`SECURITY_ARCHITECTURE.md` "Input
+      validation"). Done: `src/lib/validation.ts` + every write route +
+      every validated GET route's query params; 23 new tests
+      (`tests/api-validation.test.ts`).
+- [x] Add `db/migrations/0006_integration_credentials.sql` for
+      `integration_credentials` — the table shape written and verified
+      against real Postgres (`db/verify-integration-credentials-rls.sql`,
+      6/6 assertions passed), encryption-at-rest/KMS integration correctly
+      left abstract (Lane 4 decision).
+- [x] Write the sanitized generic seed dataset for external-developer
+      local dev. Done: `src/data/seed.external-dev.ts`, selected via
+      `AGENTOS_SEED_DATASET=external-dev`; see `HUMAN_DEVELOPER_HANDOFF.md`
+      "Sanitized local-dev seed data" for the exact usage note (including
+      the Next.js static-optimization caveat found while verifying it).
 - [ ] Add a `/api/health` route once a real database exists to check
-      (`SECURITY_ARCHITECTURE.md` "Health checks") — trivial once §Lane 2's
-      DB swap has landed enough to have something to check.
-- [ ] Add `next.config.js` security headers (`SECURITY_ARCHITECTURE.md`
-      "Security headers") — CSP needs tuning once real third-party script
-      sources are known, but the non-CSP headers (`X-Content-Type-Options`,
-      `X-Frame-Options`, `Referrer-Policy`) are safe to add now.
-- [ ] Write a CI workflow file running the existing four commands
-      (`typecheck`/`lint`/`test`/`build`) — safe and mechanical
-      (`DEPLOYMENT_GUIDE.md` "CI/CD"), even before a hosting target is
-      chosen.
-- [ ] Add an import-boundary ESLint rule (`eslint-plugin-boundaries` or
-      similar) enforcing that `src/app/**` and `src/components/**` only
-      import from `@/core` and type-shape files, not `@/repositories/*`
-      directly — makes `src/core/index.ts` (this phase) actually
-      enforced, not just documented.
-- [ ] Convert remaining direct `@/repositories` imports in Server
-      Components into calls against existing (or newly-added) API routes
-      — the mechanical part of `PRODUCTION_ARCHITECTURE.md` §2's Option A,
-      doable incrementally, page by page, without waiting for the DB swap.
+      (`SECURITY_ARCHITECTURE.md` "Health checks") — still correctly
+      blocked on the Lane 2 DB swap having landed enough to have something
+      to check; not attempted.
+- [x] Add `next.config.js` security headers. Done:
+      `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
+      `Permissions-Policy`, `X-DNS-Prefetch-Control`, verified live via
+      `curl -I`. CSP and HSTS still correctly deferred (see
+      `BUILD_STATUS_V2.md` Phase 3A for why).
+- [x] Write a CI workflow file running the existing four commands. Done:
+      `.github/workflows/ci.yml`.
+- [x] Add an import-boundary ESLint rule enforcing that `src/app/**` and
+      `src/components/**` only import from `@/core`, not `@/repositories/*`
+      (or the other Core-internal modules) directly. Done:
+      `.eslintrc.json` `overrides`; `src/core/index.ts`'s surface expanded
+      to cover what Dashboard code actually needs; two narrow, documented
+      `"use client"`-only exceptions (see `BUILD_STATUS_V2.md` Phase 3A
+      item 5 for exactly why those two and not more).
+- [x] Convert remaining direct `@/repositories` imports in Server
+      Components. Done, with a scope correction: all 21 API routes and 19
+      pages now import via `@/core`, plus 3 places that reached past
+      `@/repositories` entirely into `@/data/store`/`@/integrations/mock-adapters`
+      got new repository-layer wrapper functions instead. What was **not**
+      done, deliberately: converting every Server Component into a
+      same-process HTTP call against the app's own API routes. `@/core` is
+      the real sanctioned boundary today (a single deployable, no physical
+      Core/Dashboard split yet) — self-fetching Server Components before
+      that split exists would add latency/failure modes for no isolation
+      benefit and is exactly the kind of broad behavior change this
+      phase's guardrails said not to make. Revisit this specific item once
+      the repository split below actually happens.
 
 ## Lane 2 — Human-developer-required implementation (needs judgment/testing depth beyond a safe automated pass)
 
@@ -48,9 +67,18 @@ business decision required.
       the schema in `DATABASE_DESIGN.md` (`db/migrations/`), using a real
       query layer (raw `pg` with parameterized queries, or an
       ORM/query-builder — team preference, not prescribed here).
+      `DATABASE_MIGRATION_HANDOFF.md` (Phase 3A) is the prepared package
+      for this: a verified 19/19 completeness audit of `Store` fields
+      against migration tables, a computed-fields call-out list, a
+      repository-by-repository target-table map, and concrete acceptance
+      criteria — reducing this from "read the schema and figure it out" to
+      "follow the map and verify against the given criteria."
 - [ ] Physically carry out the repository split
-      (`PRODUCTION_ARCHITECTURE.md` §2 Option A) once Lane 1's import
-      conversion is complete.
+      (`PRODUCTION_ARCHITECTURE.md` §2 Option A) — Lane 1's import
+      conversion is now complete (Phase 3A), so every place that would
+      need to change when the physical split happens already goes through
+      `@/core` and nowhere else, confirmed by the ESLint rule actually
+      passing repo-wide.
 - [ ] Wire real authentication once a provider is chosen (Lane 4) —
       replace `src/lib/auth.ts` `getCurrentUser()`'s hardcoded return with
       real session reading; wire `hasAtLeastTenantMembership()`
@@ -99,9 +127,10 @@ business decision required.
       CompanyCam, Sortly, Canva, Meta Ads, Google Ads, Facebook leads,
       Google reviews, website forms.
 - [ ] A real database instance from whichever managed provider is chosen
-      (Lane 4) — schema is ready (`DATABASE_DESIGN.md`), verified against
-      a local Postgres; needs the real managed instance to actually
-      deploy against.
+      (Lane 4) — schema is ready, including the Phase 3A
+      `integration_credentials` addition (`DATABASE_DESIGN.md`), verified
+      against a local Postgres; needs the real managed instance to
+      actually deploy against.
 - [ ] A real auth provider account/app registration (Lane 4).
 - [ ] A real secret manager / KMS account (Lane 4).
 - [ ] A real monitoring/alerting provider account (Lane 4).
@@ -146,9 +175,35 @@ downstream task.
       double-checking, restated here since this checklist is the
       "before you ship" list.
 
-## What this phase explicitly did NOT touch
+## What Phase 3A explicitly did NOT touch
 
-Per the phase brief's own guardrails, verified true of every change made:
+Per that phase's own guardrails, verified true of every change made:
+
+- The approval-first architecture is unweakened — `src/approvals/engine.ts`
+  is unmodified this phase too; the new zod validation layer sits strictly
+  in front of every route, rejecting malformed input before it reaches any
+  approval logic, never bypassing or loosening the engine's own checks.
+- No autonomous banking/payment capability was added — unchanged from
+  every prior phase, confirmed again by the same schema/code scan.
+- No agent's trust state was promoted, and `src/config/agent-registry.ts`
+  was not touched at all this phase.
+- No live credentials were added anywhere, and no third-party API was
+  connected — every integration adapter remains a typed mock
+  (`src/integrations/mock-adapters.ts` unchanged); the new
+  `integration_credentials` table has no application code writing to it.
+- No existing test was removed; 26 new ones were added
+  (`tests/api-validation.test.ts` plus expansions to
+  `tests/authorization-model.test.ts`/`tests/tenant-isolation.test.ts`) —
+  total 79/79 passing, up from 53/53.
+- No page, route, or component's observable behavior changed for a
+  well-formed request — verified with live smoke tests against a running
+  production build after every structural change (the import-boundary
+  conversion in particular), not assumed from a clean typecheck/build
+  alone.
+
+## What the Hardening phase explicitly did NOT touch
+
+Per that phase's own guardrails, verified true of every change made:
 
 - The approval-first philosophy is unweakened — `src/approvals/engine.ts`
   is unmodified; the new `canUserApprove()` wiring (a prior session) and

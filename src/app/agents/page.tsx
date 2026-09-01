@@ -1,11 +1,9 @@
 import Link from "next/link";
-import { listAgents, runsForAgent } from "@/repositories";
+import { listAgents, runsForAgent, getAgentRegistryEntry, TRUST_STATE_LABELS } from "@/core";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge, StatusPill } from "@/components/ui/Badge";
 import { AgentRunButton } from "@/components/agents/AgentRunButton";
 import { AGENT_STATUS_COPY } from "@/domain";
-import { getAgentRegistryEntry } from "@/config/agent-registry";
-import { TRUST_STATE_LABELS } from "@/domain/governance";
 
 const toneFor: Record<string, "good" | "attention" | "urgent" | "info"> = {
   idle: "info",

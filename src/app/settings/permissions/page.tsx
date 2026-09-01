@@ -1,5 +1,5 @@
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
-import { PROHIBITED_ACTION_TYPES } from "@/approvals/prohibited";
+import { PROHIBITED_ACTION_TYPES } from "@/core";
 
 const POLICY_MATRIX: { action: string; prepare: string; approval: string; execution: string }[] = [
   { action: "Read Jobber/QBO/calendar", prepare: "Yes", approval: "Connection authorization only", execution: "Yes, read only" },

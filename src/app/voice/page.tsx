@@ -1,5 +1,4 @@
-import { listVoiceCalls, voiceKpis } from "@/repositories";
-import { getAgent } from "@/repositories/agents";
+import { listVoiceCalls, voiceKpis, getAgent } from "@/core";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge, PriorityChip } from "@/components/ui/Badge";
 import { KpiRow } from "@/components/ui/KpiRow";

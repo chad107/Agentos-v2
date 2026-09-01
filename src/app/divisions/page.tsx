@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { DIVISIONS } from "@/config/divisions";
-import { allDivisionSnapshots } from "@/repositories";
+import { DIVISIONS, allDivisionSnapshots } from "@/core";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 

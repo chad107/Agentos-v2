@@ -1,4 +1,4 @@
-import { upcomingDeadlines } from "@/repositories";
+import { upcomingDeadlines } from "@/core";
 import { UpcomingDeadlines } from "@/components/home/UpcomingDeadlines";
 
 /**

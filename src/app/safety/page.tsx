@@ -1,4 +1,4 @@
-import { listSafetyRequirements, ladderInspections } from "@/repositories";
+import { listSafetyRequirements, ladderInspections } from "@/core";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { KpiRow } from "@/components/ui/KpiRow";

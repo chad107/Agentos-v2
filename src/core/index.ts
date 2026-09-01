@@ -15,12 +15,29 @@
  *
  * Deliberately NOT re-exported here (Core-internal, never called directly
  * by a route handler): src/cohen/**, src/approvals/engine.ts's internal
- * helpers, src/events/dispatcher.ts, src/data/**. Route handlers call the
- * repository functions below; those repository functions are what call
- * into Cohen/the approval engine/the event bus internally.
+ * helpers, src/events/dispatcher.ts, src/data/**, src/integrations/**.
+ * Route handlers call the repository functions below; those repository
+ * functions are what call into Cohen/the approval engine/the event
+ * bus/the adapter roster internally.
+ *
+ * Phase 3A addition: the import-boundary ESLint rule (`.eslintrc.json`
+ * `overrides`) now mechanically enforces that `src/app/**` and
+ * `src/components/**` may only reach Core through this file — so every
+ * config/policy/type module those layers actually render (division and
+ * agent-registry rosters, workflow definitions, governance labels,
+ * prohibited-action list, approval-stage derivation) is re-exported below
+ * too. None of this changes behavior; it makes the existing dependency
+ * explicit and lint-checkable instead of an unenforced convention.
  */
 
 export * from "@/repositories";
 export { getCurrentTenant, getModuleEntitlements, isModuleActive, getTenantMembership, hasAtLeastTenantMembership } from "@/lib/tenant-context";
 export { getCurrentUser, getUserById, hasAtLeastRole } from "@/lib/auth";
 export { canUserApprove } from "@/approvals/engine";
+export { recordEvent } from "@/audit/log";
+export * from "@/approvals/prohibited";
+export * from "@/approvals/stages";
+export * from "@/config/agent-registry";
+export * from "@/config/divisions";
+export * from "@/config/workflows";
+export * from "@/domain/governance";

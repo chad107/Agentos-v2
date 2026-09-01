@@ -1,4 +1,4 @@
-import { listAccountingItems, billsDueSoon, depositsExpected, statementsNeedingCrossCheck, exceptions } from "@/repositories";
+import { listAccountingItems, billsDueSoon, depositsExpected, statementsNeedingCrossCheck, exceptions } from "@/core";
 import { ok } from "@/lib/api";
 
 export async function GET() {

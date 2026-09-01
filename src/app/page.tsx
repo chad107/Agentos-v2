@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { homeSnapshot, allDivisionSnapshots } from "@/repositories";
+import { homeSnapshot, allDivisionSnapshots } from "@/core";
 import { RecommendationCard } from "@/components/recommendations/RecommendationCard";
 import { NothingLeftBehind } from "@/components/home/NothingLeftBehind";
 import { NeedsAttention } from "@/components/home/NeedsAttention";

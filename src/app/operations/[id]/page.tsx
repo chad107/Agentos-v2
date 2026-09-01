@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getJob, requirementsForJob, equipmentForJob, listRecommendations } from "@/repositories";
-import { listSafetyRequirements } from "@/repositories/safety";
+import { getJob, requirementsForJob, equipmentForJob, listRecommendations, listSafetyRequirements } from "@/core";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge, ReadinessBadge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";

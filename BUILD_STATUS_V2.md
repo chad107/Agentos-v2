@@ -628,6 +628,200 @@ added a library module and documentation, not new pages/routes).
 
 ---
 
+## Phase 3A — Production Foundation Preparation ✅ (Lane 1 backlog, complete)
+
+At the user's direction: complete every item classified Lane 1 /
+Claude-safe in `PRODUCTION_READINESS_CHECKLIST.md` — additive, testable,
+reversible work needing no external credentials and no owner decision —
+without building additional broad product features. Nine numbered
+priorities, all completed:
+
+**1. Strict request-body/query validation on every API route (zod).**
+`src/lib/validation.ts` (new): `parseJsonBody`/`parseQuery` helpers wrapping
+zod's `safeParse` against the existing `badRequest()` response shape,
+plus an `optionalPositiveIntParam` schema for query-string integers. Every
+write-capable route now validates its body with a `.strict()` schema
+(`approvals/[id]/{approve,reject,clarify}`, `cohen/chat`) — a malformed
+JSON body is now a precise 400 instead of being silently swallowed into
+"proceed as if empty" (verified live: malformed JSON, a missing required
+field, and an unrecognized extra field on a strict schema all now 400 with
+a specific message). Query parameters are validated too, closing two real
+gaps found in the process: `GET /api/approvals?status=` previously did an
+unchecked `as ProposalStatus` cast with no validation at all, and `GET
+/api/activity?actorType=` silently ignored an invalid value instead of
+rejecting it — both now validate against the same enum the domain type
+uses (`PROPOSAL_STATUSES`, `AUDIT_ACTOR_TYPES`) and 400 on a bad value.
+Zod (`^3.25`) added as the only new runtime dependency, `npm audit` re-run
+clean of new advisories from it.
+
+**2. Safe production HTTP security headers.** `next.config.js` now sets
+`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
+`Permissions-Policy`, and `X-DNS-Prefetch-Control` on every route, verified
+live via `curl -I` against a running production build. Deliberately not
+set: `Content-Security-Policy` (needs real third-party script/style/connect
+sources, which don't exist yet — a wrong CSP fails silently rather than
+loudly) and `Strict-Transport-Security` (belongs at the load-balancer/CDN
+layer once a hosting provider is chosen, Lane 4) — both flagged as open in
+`SECURITY_ARCHITECTURE.md`, not silently skipped.
+
+**3. CI configuration.** `.github/workflows/ci.yml` — a single job running
+`npm ci`, `typecheck`, `lint`, `test`, `build` on every push/PR, Node 20.
+`npm ci --dry-run` verified clean (lockfile in sync after adding zod)
+before committing the workflow.
+
+**4. Sanitized external-developer seed dataset.** `src/data/seed.external-dev.ts`
+(new) — the same 19 entity collections and shapes as `src/data/seed.ts`,
+generated from it by replacing every real customer name, staff name,
+vendor/supplier name, and place name (including ones embedded in email
+greetings and tracking-ref abbreviations, not just the obvious id/name
+fields) with a fictional equivalent. Verified clean by an explicit
+grep-based leak check for every real name/place/vendor string after
+generation — zero matches. Selected via `AGENTOS_SEED_DATASET=external-dev`
+(`src/data/store.ts`), defaulting to the real dataset unchanged — this file
+changes no default behavior. **Verified live, and a real subtlety found in
+the process**: Next.js's automatic static optimization pre-renders some
+API routes (e.g. `/api/sales/leads`, marked "○ Static" in the build output)
+at *build* time, so the env var only takes effect for those routes if it's
+set before `npm run build`, not just before `next start` — confirmed
+correct behavior under `npm run dev` (the workflow `README.md`'s Quick
+Start actually documents), and documented below so a future developer
+doesn't hit the same confusion debugging it live.
+
+**5. Core/Dashboard import boundary — enforced, not just documented.**
+`.eslintrc.json` gained an `overrides` block: `no-restricted-imports`
+now blocks `src/app/**`/`src/components/**` from importing
+`@/repositories/*`, `@/data/*`, `@/cohen/*`, `@/approvals/{engine,prohibited,stages}`,
+`@/events/*`, `@/audit/*`, `@/integrations/{mock-adapters,types}`,
+`@/config/{agent-registry,divisions,workflows}`,
+`@/domain/{authorization,events,governance,memory}`, and
+`@/lib/{auth,jsa-cadence,tenant-context}` directly — everything must
+route through `@/core`. `src/core/index.ts`'s re-export surface was
+expanded to actually cover what Dashboard-layer code uses (config/policy/
+governance modules it was already reading, previously via a direct import
+the new rule would otherwise break). Two explicit, documented exceptions
+remain, both because `@/core` transitively pulls in server-only code
+(the store's `node:sqlite` persistence) that breaks a client webpack
+bundle if reached from a `"use client"` component:
+`src/components/cohen/AskCohenPanel.tsx` and
+`src/components/approvals/StageTracker.tsx` (reachable from
+`ProposalCard`/`EvidenceDrawer`, both client components) still import
+directly from `@/cohen/ask-cohen` and `@/approvals/stages` respectively —
+both pure, side-effect-free derivation functions with no proprietary
+reasoning or store access, and both listed in the ESLint rule's
+`excludedFiles` with an inline comment explaining why. **Caught by
+actually running `next build`, not just lint**: the first version of this
+change passed `typecheck`/`lint` but failed the production build with
+`UnhandledSchemeError: node:fs`/`node:module`/`node:path`, tracing straight
+to `StageTracker.tsx` → `@/core` → `@/data/store` → `@/data/persistence`.
+Fixed by reverting that one file's import — a real example of why a
+build-only failure mode needs to actually be built, not inferred from a
+clean typecheck.
+
+**6. Direct-repository-access conversion (Server Components → `@/core`).**
+Every one of the 21 API routes and 19 page/layout files that imported
+`@/repositories` (or a `@/repositories/*` submodule) directly now imports
+from `@/core` instead — including 3 places (`recommendations/[id]`,
+`agents/[id]/run`, `integrations/[id]/test`) that reached past the
+repository layer entirely into `@/data/store`'s `getStore()` or
+`@/integrations/mock-adapters` directly. Those three got new, small
+repository-layer wrapper functions instead of a blanket re-export of raw
+store access: `findingsByIds()` (`src/repositories/recommendations.ts`),
+`markAgentRunTriggered()` (`src/repositories/agents.ts`,
+behavior-identical to the inline mutation it replaced),
+`testIntegrationConnection()` (`src/repositories/integrations.ts`), and a
+new `src/repositories/cohen.ts` wrapping `@/cohen/ask-cohen` for the one
+route (`/api/cohen/chat`) that needs it. This is the literal interpretation
+of "sanctioned service boundary" for a single-deployable Next.js app:
+`@/core` is that boundary today, not a same-process HTTP round-trip to the
+app's own API routes from its own Server Components — the latter would add
+latency/failure modes for no isolation benefit before the physical
+Core/Dashboard repository split (`PRODUCTION_ARCHITECTURE.md` §2) actually
+exists, and converting every Server Component to self-fetch is exactly the
+kind of broad, behavior-risking change this phase's own guardrails say not
+to make. Verified with a live smoke test against a running production
+build after the full conversion: every route exercised (reject, agent-run
+trigger, cohen chat, integration test, recommendation detail with its
+findings, division pages, settings pages) returned the same data and
+status codes as before the conversion.
+
+**7. Integration-credential schema, encryption abstract.**
+`db/migrations/0006_integration_credentials.sql` — the "dedicated
+`integration_credentials` table" design `INTEGRATION_SECURITY.md` names
+as one of two acceptable options. Ciphertext-only (`BYTEA`), an opaque
+`encryption_key_id` reference column, no dependency on or opinion about
+which KMS/secrets-manager provider is eventually chosen (Lane 4 Owner
+Decision) — the migration and this phase's work stop exactly at "the
+table shape, tenant-isolated and tested," per the instruction to leave the
+actual secret-provider implementation abstract. **Actually executed
+against a real local Postgres 16 instance**, not just written: the full
+migration chain (`0000` through the new `0006`) applied cleanly, two test
+tenants provisioned, and a new 6-assertion verification script
+(`db/verify-integration-credentials-rls.sql`, same pattern as the existing
+`db/verify-rls.sql`) confirmed cross-tenant reads blocked, cross-tenant
+writes blocked, no-context fails closed, and — specifically for this
+table — that no plaintext-shaped token column exists on it. All 6
+assertions passed.
+
+**8. Test coverage expansion.** 26 new tests, 79/79 passing (up from
+53/53), across 2 new/expanded areas:
+- `tests/api-validation.test.ts` (new, 23 tests) — calls the actual
+  exported route handlers directly with real `Request` objects (no HTTP
+  server needed), covering every write route's new zod validation
+  (malformed JSON, missing/empty/whitespace-only required fields, an
+  unrecognized field on a strict schema, a non-object `editedPayload`),
+  every validated GET route's query handling (bad division/status/
+  actorType enum values, non-numeric and negative `limit`), and one
+  defense-in-depth test proving the *route* layer — not just the engine
+  unit tests that already covered this — still 400s rather than approving
+  a proposal whose `permissionClass` is `prohibited`, if one somehow
+  existed in the store.
+- `tests/authorization-model.test.ts` / `tests/tenant-isolation.test.ts`
+  (expanded, 3 new tests) — an `invited`-but-not-yet-`active` membership is
+  denied even at the `owner` role; tenant/user id lookups are confirmed
+  exact-match, not case- or whitespace-tolerant (`"VRHP"`, `" vrhp"`,
+  `"vrhp "` all correctly resolve to zero entitlements, not the flagship
+  tenant's).
+
+**9. Production PostgreSQL migration/handoff package.**
+`DATABASE_MIGRATION_HANDOFF.md` (new) — prepares, without implementing,
+the Lane 2 swap of `src/data/store.ts`'s internals for real queries. A
+verified completeness audit (checked directly against `CREATE TABLE`
+statements, not inferred from prose) confirms all 19 `Store` interface
+fields have a 1:1 migration table; a computed-fields table flags the ones
+that will NOT have a matching column (`Agent.openFindingsCount`,
+`Recommendation.cohenRank`) and explains what a real implementation needs
+to do instead; a repository-by-repository map gives every exported
+function in `src/repositories/*.ts` its target table(s); and explicit
+acceptance criteria (typecheck with zero changes outside the repository
+layer, both RLS verification scripts still passing, a live persist-across-
+restart smoke test) give a human developer a concrete "done" definition
+instead of an open-ended task. `DATABASE_DESIGN.md` and
+`INTEGRATION_SECURITY.md` updated to reflect `0006`'s existence (both
+previously said the credentials table didn't exist yet).
+
+**Explicitly did not do, per this phase's own guardrails (verified true):**
+no live credentials were added anywhere; no third-party API was connected
+(every integration remains a typed mock); the approval-first architecture
+is unweakened (`src/approvals/engine.ts` untouched all phase; the new
+validation layer sits strictly in front of it, rejecting malformed input
+before it ever reaches the engine, never bypassing the engine's own
+checks); no agent's trust state was promoted or even touched
+(`src/config/agent-registry.ts` untouched); no autonomous banking/payment
+capability exists anywhere (unchanged from every prior phase); all
+existing behavior preserved — every route, page, and test that passed
+before this phase still passes with an unchanged response shape, verified
+by the live smoke tests cited above rather than assumed from a clean
+build.
+
+Full check suite green throughout, re-verified after the complete phase:
+`npm run typecheck` (strict, zero errors), `npm run lint` (zero warnings,
+including the new import-boundary rule), `npm run test` (79/79 across 12
+suites, up from 53/53), `npm run build` (52 routes, unchanged — this phase
+added library/repository modules, validation, config, and documentation,
+not new pages).
+
+---
+
 ## Remaining work (honest scope assessment)
 
 Not attempted this session, and each large enough to warrant its own pass
@@ -650,9 +844,20 @@ rather than a shallow stub:
   and dependency-vulnerability triage of the 10 pre-existing `npm audit`
   advisories.
 - **Gap M (partial)**: single-process local persistence now exists (see
-  "Post-milestone-12" above) — but the real production database decision,
-  schema, and migrations remain open, and real auth/SSO is still
-  untouched. The punch list for both is in `README.md`.
+  "Post-milestone-12" above) — the schema and migrations are now designed,
+  written, and verified against real Postgres (`DATABASE_DESIGN.md`,
+  `DATABASE_MIGRATION_HANDOFF.md`, Phase 3A above), but the actual swap of
+  `src/data/store.ts`'s internals for real queries, and real auth/SSO, are
+  both still open — both are Lane 2 (Human-Developer) items in
+  `PRODUCTION_READINESS_CHECKLIST.md`, not Lane 1.
+
+Everything classified Lane 1 / Claude-safe in
+`PRODUCTION_READINESS_CHECKLIST.md` is now complete (Phase 3A above) — what
+remains for AgentOS to become a deployable, secure commercial product is
+entirely Lane 2 (human-developer judgment/testing depth), Lane 3 (blocked
+on a real vendor/hosting credential), or Lane 4 (an owner decision only the
+business can make). See that document for the current, itemized state of
+each lane.
 
 ---
 

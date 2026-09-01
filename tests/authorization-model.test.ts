@@ -41,4 +41,14 @@ describe("AUTHORIZATION_MODEL.md — tenant membership scaffolding", () => {
   it("denies an undefined membership", () => {
     expect(hasAtLeastTenantRole(undefined, "customer")).toBe(false);
   });
+
+  it("denies an invited-but-not-yet-active membership, even at the owner role", () => {
+    const invited: TenantMembership = { tenantId: "vrhp", userId: "u_new", role: "owner", status: "invited" };
+    expect(hasAtLeastTenantRole(invited, "customer")).toBe(false);
+  });
+
+  it("tenant/user lookup is exact-match, not case-insensitive — a differently-cased id is a different, unrecognized pairing", () => {
+    expect(getTenantMembership("VRHP", "u_owner")).toBeUndefined();
+    expect(getTenantMembership("vrhp", "U_OWNER")).toBeUndefined();
+  });
 });

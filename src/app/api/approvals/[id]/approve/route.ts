@@ -1,7 +1,12 @@
-import { decideApprove, decideEditAndApprove, getProposal } from "@/repositories";
-import { getCurrentUser } from "@/lib/auth";
-import { canUserApprove } from "@/approvals/engine";
-import { ok, badRequest, notFound, forbidden } from "@/lib/api";
+import { decideApprove, decideEditAndApprove, getProposal, getCurrentUser, canUserApprove } from "@/core";
+import { ok, notFound, forbidden, badRequest } from "@/lib/api";
+import { parseJsonBody, z } from "@/lib/validation";
+
+const ApproveBodySchema = z
+  .object({
+    editedPayload: z.record(z.unknown()).optional()
+  })
+  .strict();
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const user = getCurrentUser();
@@ -11,13 +16,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     return forbidden(`${user.name} does not have an approver-eligible role for this proposal.`);
   }
 
-  let editedPayload: Record<string, unknown> | undefined;
-  try {
-    const body = await req.json();
-    editedPayload = body?.editedPayload;
-  } catch {
-    // no body / not JSON — approve as-is
-  }
+  const parsed = await parseJsonBody(req, ApproveBodySchema);
+  if (!parsed.ok) return parsed.response;
+  const { editedPayload } = parsed.data;
 
   const result = editedPayload
     ? decideEditAndApprove(params.id, user.id, editedPayload)

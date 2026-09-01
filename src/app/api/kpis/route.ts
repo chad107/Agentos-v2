@@ -6,27 +6,23 @@
  * the other write-ish demo action, /api/agents/:id/run.
  */
 import { DIVISION_KEYS } from "@/domain/platform";
-import type { DivisionKey } from "@/domain/platform";
-import { listKpiObservations, recordKpiObservations } from "@/repositories";
-import { getCurrentUser, hasAtLeastRole } from "@/lib/auth";
-import { ok, forbidden, badRequest } from "@/lib/api";
+import { listKpiObservations, recordKpiObservations, getCurrentUser, hasAtLeastRole } from "@/core";
+import { ok, forbidden } from "@/lib/api";
+import { parseQuery, optionalPositiveIntParam, z } from "@/lib/validation";
 
-function parseDivisionKey(value: string | null): DivisionKey | undefined {
-  if (value && (DIVISION_KEYS as readonly string[]).includes(value)) return value as DivisionKey;
-  return undefined;
-}
+const KpiQuerySchema = z.object({
+  division: z.enum(DIVISION_KEYS).optional(),
+  limit: optionalPositiveIntParam
+});
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const divisionParam = searchParams.get("division");
-  if (divisionParam && !parseDivisionKey(divisionParam)) {
-    return badRequest(`Unknown division "${divisionParam}".`);
-  }
-  const limit = searchParams.get("limit");
+  const parsed = parseQuery(searchParams, KpiQuerySchema);
+  if (!parsed.ok) return parsed.response;
   return ok(
     listKpiObservations({
-      divisionKey: parseDivisionKey(divisionParam),
-      limit: limit ? Number(limit) : undefined
+      divisionKey: parsed.data.division,
+      limit: parsed.data.limit
     })
   );
 }

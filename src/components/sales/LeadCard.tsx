@@ -1,6 +1,6 @@
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { isSlaBreached } from "@/repositories/sales";
+import { isSlaBreached } from "@/core";
 import type { Lead } from "@/domain";
 
 const scoreStyles: Record<Lead["score"], string> = {

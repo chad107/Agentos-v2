@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { HealthIndicator } from "@/repositories/home";
+import type { HealthIndicator } from "@/core";
 
 /**
  * Exception-driven Business Health (V2 spec, "Make Business Health

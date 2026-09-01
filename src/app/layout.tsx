@@ -7,7 +7,7 @@ import { TopBar } from "@/components/layout/TopBar";
 import { AskCohenProvider } from "@/components/cohen/ask-cohen-context";
 import { AskCohenPanel } from "@/components/cohen/AskCohenPanel";
 import { AskCohenLauncher } from "@/components/cohen/AskCohenLauncher";
-import { attentionCounters } from "@/repositories";
+import { attentionCounters } from "@/core";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
 

@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { listKnowledgeItems } from "@/repositories";
-import { listDecisions } from "@/repositories/decisions";
+import { listKnowledgeItems, listDecisions } from "@/core";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";

@@ -1,6 +1,4 @@
-import { WORKFLOWS } from "@/config/workflows";
-import { listActivity } from "@/repositories";
-import { getDivisionConfig } from "@/config/divisions";
+import { WORKFLOWS, listActivity, getDivisionConfig } from "@/core";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";

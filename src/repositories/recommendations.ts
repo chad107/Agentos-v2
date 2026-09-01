@@ -1,5 +1,5 @@
 // PROPRIETARY — AgentOS Core. See IP_BOUNDARY.md.
-import type { Recommendation } from "@/domain";
+import type { Finding, Recommendation } from "@/domain";
 import { getStore } from "@/data/store";
 import { buildTop3 } from "@/cohen/orchestrate";
 
@@ -9,6 +9,11 @@ export function listRecommendations(): Recommendation[] {
 
 export function getRecommendation(id: string): Recommendation | undefined {
   return getStore().recommendations.find((r) => r.id === id);
+}
+
+/** Findings backing a recommendation's evidence trail — the Core-only store access an API route needs, wrapped so route handlers never touch `getStore()` directly. */
+export function findingsByIds(ids: string[]): Finding[] {
+  return getStore().findings.filter((f) => ids.includes(f.id));
 }
 
 export function top3Recommendations(): Recommendation[] {

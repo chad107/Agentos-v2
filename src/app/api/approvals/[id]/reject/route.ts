@@ -1,7 +1,12 @@
-import { decideReject, getProposal } from "@/repositories";
-import { getCurrentUser } from "@/lib/auth";
-import { canUserApprove } from "@/approvals/engine";
+import { decideReject, getProposal, getCurrentUser, canUserApprove } from "@/core";
 import { ok, badRequest, notFound, forbidden } from "@/lib/api";
+import { parseJsonBody, z } from "@/lib/validation";
+
+const RejectBodySchema = z
+  .object({
+    reason: z.string().trim().min(1, "A reason is required to reject a proposal.")
+  })
+  .strict();
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const user = getCurrentUser();
@@ -11,11 +16,10 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     return forbidden(`${user.name} does not have an approver-eligible role for this proposal.`);
   }
 
-  const body = await req.json().catch(() => ({}));
-  const reason = typeof body?.reason === "string" ? body.reason : "";
-  if (!reason.trim()) return badRequest("A reason is required to reject a proposal.");
+  const parsed = await parseJsonBody(req, RejectBodySchema);
+  if (!parsed.ok) return parsed.response;
 
-  const result = decideReject(params.id, user.id, reason);
+  const result = decideReject(params.id, user.id, parsed.data.reason);
   if (!result.ok) {
     return result.error === "Proposal not found." ? notFound(result.error) : badRequest(result.error);
   }

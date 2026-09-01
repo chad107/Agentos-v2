@@ -1,6 +1,6 @@
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import type { CompetitorSignal } from "@/repositories/sales";
+import type { CompetitorSignal } from "@/core";
 
 /** Source and uncertainty are always shown (03_DASHBOARD_UX_SPEC.md "Competitor signal panel"). */
 export function CompetitorSignals({ signals }: { signals: CompetitorSignal[] }) {

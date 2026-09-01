@@ -1,3 +1,12 @@
+// Deliberate, documented exception to the Core/Dashboard import-boundary
+// rule (.eslintrc.json `overrides`, PRODUCTION_READINESS_CHECKLIST.md
+// Lane 1): this component is reachable from "use client" entry points
+// (ProposalCard, EvidenceDrawer), so it cannot import `@/core` — that
+// barrel transitively pulls in server-only modules (the store's
+// node:sqlite persistence) that break the client webpack build if bundled
+// client-side. `proposalStages` is a pure derivation over the
+// already-fetched proposal prop, with no store access, so importing it
+// directly is low-risk; see IP_BOUNDARY.md.
 import { proposalStages, type StageState } from "@/approvals/stages";
 import type { ActionProposal } from "@/domain";
 

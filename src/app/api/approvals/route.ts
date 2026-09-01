@@ -1,9 +1,15 @@
-import type { ProposalStatus } from "@/domain";
-import { listProposals } from "@/repositories";
+import { PROPOSAL_STATUSES } from "@/domain";
+import { listProposals } from "@/core";
 import { ok } from "@/lib/api";
+import { parseQuery, z } from "@/lib/validation";
+
+const ApprovalsQuerySchema = z.object({
+  status: z.enum(PROPOSAL_STATUSES).optional()
+});
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const status = searchParams.get("status") as ProposalStatus | null;
-  return ok(listProposals(status ? { status } : undefined));
+  const parsed = parseQuery(searchParams, ApprovalsQuerySchema);
+  if (!parsed.ok) return parsed.response;
+  return ok(listProposals(parsed.data.status ? { status: parsed.data.status } : undefined));
 }

@@ -1,5 +1,4 @@
-import { getJob, requirementsForJob, equipmentForJob } from "@/repositories";
-import { listSafetyRequirements } from "@/repositories/safety";
+import { getJob, requirementsForJob, equipmentForJob, listSafetyRequirements } from "@/core";
 import { ok, notFound } from "@/lib/api";
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {

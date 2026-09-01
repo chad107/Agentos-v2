@@ -1,4 +1,4 @@
-import { listVoiceCalls, voiceKpis } from "@/repositories";
+import { listVoiceCalls, voiceKpis } from "@/core";
 import { ok } from "@/lib/api";
 
 export async function GET() {

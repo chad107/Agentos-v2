@@ -1,25 +1,17 @@
-import type { AuditActorType } from "@/domain";
 import { AUDIT_ACTOR_TYPES } from "@/domain";
-import { listActivity } from "@/repositories";
+import { listActivity } from "@/core";
 import { ok } from "@/lib/api";
+import { parseQuery, optionalPositiveIntParam, z } from "@/lib/validation";
 
-function parseActorType(value: string | null): AuditActorType | undefined {
-  if (value && (AUDIT_ACTOR_TYPES as readonly string[]).includes(value)) {
-    return value as AuditActorType;
-  }
-  return undefined;
-}
+const ActivityQuerySchema = z.object({
+  limit: optionalPositiveIntParam,
+  entityType: z.string().trim().min(1).optional(),
+  actorType: z.enum(AUDIT_ACTOR_TYPES).optional()
+});
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const limit = searchParams.get("limit");
-  const entityType = searchParams.get("entityType") ?? undefined;
-  const actorType = parseActorType(searchParams.get("actorType"));
-  return ok(
-    listActivity({
-      limit: limit ? Number(limit) : undefined,
-      entityType,
-      actorType
-    })
-  );
+  const parsed = parseQuery(searchParams, ActivityQuerySchema);
+  if (!parsed.ok) return parsed.response;
+  return ok(listActivity(parsed.data));
 }

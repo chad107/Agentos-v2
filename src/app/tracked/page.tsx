@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { trackedItems, trackedCounts, TRACKED_CATEGORY_ICONS, type TrackedCategory } from "@/repositories/tracked";
+import { trackedItems, trackedCounts, TRACKED_CATEGORY_ICONS, type TrackedCategory } from "@/core";
 import { Card, CardBody } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 

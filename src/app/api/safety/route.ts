@@ -1,4 +1,4 @@
-import { listSafetyRequirements, missingOrEscalatedJsa, ladderInspections } from "@/repositories";
+import { listSafetyRequirements, missingOrEscalatedJsa, ladderInspections } from "@/core";
 import { ok } from "@/lib/api";
 
 export async function GET() {

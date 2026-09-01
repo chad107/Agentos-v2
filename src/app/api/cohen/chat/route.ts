@@ -1,13 +1,19 @@
-import { getRecommendation } from "@/repositories";
-import { answerQuestion } from "@/cohen/ask-cohen";
-import { ok, badRequest } from "@/lib/api";
+import { getRecommendation, askCohenQuestion } from "@/core";
+import { ok } from "@/lib/api";
+import { parseJsonBody, z } from "@/lib/validation";
+
+const ChatBodySchema = z
+  .object({
+    question: z.string().trim().min(1, "A question is required."),
+    recommendationId: z.string().trim().min(1).optional()
+  })
+  .strict();
 
 export async function POST(req: Request) {
-  const body = await req.json().catch(() => ({}));
-  const question = typeof body?.question === "string" ? body.question : "";
-  if (!question.trim()) return badRequest("A question is required.");
+  const parsed = await parseJsonBody(req, ChatBodySchema);
+  if (!parsed.ok) return parsed.response;
 
-  const recommendation = typeof body?.recommendationId === "string" ? getRecommendation(body.recommendationId) : undefined;
-  const answer = answerQuestion(question, { recommendation });
+  const recommendation = parsed.data.recommendationId ? getRecommendation(parsed.data.recommendationId) : undefined;
+  const answer = askCohenQuestion(parsed.data.question, { recommendation });
   return ok({ answer });
 }

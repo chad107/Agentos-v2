@@ -4,6 +4,14 @@ import { useState } from "react";
 import { Drawer } from "@/components/ui/Drawer";
 import { Button } from "@/components/ui/Button";
 import { useAskCohen } from "./ask-cohen-context";
+// Deliberate, documented exception to the Core/Dashboard import-boundary
+// rule (.eslintrc.json `overrides`, PRODUCTION_READINESS_CHECKLIST.md
+// Lane 1): this is a "use client" component, so it cannot import `@/core`
+// — that barrel transitively pulls in server-only modules (the store's
+// node:sqlite persistence) that must never reach a client bundle.
+// `suggestedQuestions` is pure canned-prompt text with no proprietary
+// reasoning or data access, so importing it directly is low-risk; see
+// IP_BOUNDARY.md.
 import { suggestedQuestions } from "@/cohen/ask-cohen";
 
 interface Turn {

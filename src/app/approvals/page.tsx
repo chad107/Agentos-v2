@@ -1,4 +1,4 @@
-import { listProposals } from "@/repositories";
+import { listProposals } from "@/core";
 import { ProposalCard } from "@/components/approvals/ProposalCard";
 import { Tabs, type TabItem } from "@/components/ui/Tabs";
 import { EmptyState } from "@/components/ui/EmptyState";

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { NeedsAttentionRow } from "@/repositories/home";
+import type { NeedsAttentionRow } from "@/core";
 
 /**
  * Compact, severity-ordered "Needs Attention" list. Only areas that

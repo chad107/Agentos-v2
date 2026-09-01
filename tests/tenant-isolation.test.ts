@@ -30,6 +30,12 @@ describe("V2 tenant isolation (03_GAP_ANALYSIS.md gap A)", () => {
     }
   });
 
+  it("tenant lookup is exact-match, not case-insensitive or whitespace-tolerant — near-miss ids get zero access, not the flagship tenant's", () => {
+    expect(getModuleEntitlements("VRHP")).toEqual([]);
+    expect(getModuleEntitlements(" vrhp")).toEqual([]);
+    expect(getModuleEntitlements("vrhp ")).toEqual([]);
+  });
+
   it("computes a snapshot for every registered division key, with no fabricated KPI values", () => {
     for (const key of DIVISION_KEYS) {
       const snapshot = divisionSnapshot(key);

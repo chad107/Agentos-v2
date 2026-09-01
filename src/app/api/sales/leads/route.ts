@@ -1,4 +1,4 @@
-import { listLeads, salesKpis, competitorSignals } from "@/repositories";
+import { listLeads, salesKpis, competitorSignals } from "@/core";
 import { ok } from "@/lib/api";
 
 export async function GET() {

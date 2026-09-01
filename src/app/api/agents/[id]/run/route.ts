@@ -5,10 +5,7 @@
  * engine and cannot itself execute a consequential action.
  */
 import type { AgentId } from "@/domain";
-import { getAgent } from "@/repositories";
-import { getStore } from "@/data/store";
-import { getCurrentUser, hasAtLeastRole } from "@/lib/auth";
-import { recordEvent } from "@/audit/log";
+import { getAgent, markAgentRunTriggered, getCurrentUser, hasAtLeastRole, recordEvent } from "@/core";
 import { toISO, now } from "@/lib/dates";
 import { ok, notFound, forbidden } from "@/lib/api";
 
@@ -22,12 +19,7 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   const agent = getAgent(agentId);
   if (!agent) return notFound("Agent not found.");
 
-  const store = getStore();
-  const idx = store.agents.findIndex((a) => a.id === agentId);
-  if (idx !== -1) {
-    const current = store.agents[idx];
-    if (current) store.agents[idx] = { ...current, lastRunAt: toISO(now()), status: "running" };
-  }
+  markAgentRunTriggered(agentId);
 
   recordEvent({
     actorType: "human",

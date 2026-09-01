@@ -1,4 +1,4 @@
-import { listIntegrations } from "@/repositories";
+import { listIntegrations } from "@/core";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { TestConnectionButton } from "@/components/settings/TestConnectionButton";

@@ -1,9 +1,16 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getAgent, runsForAgent } from "@/repositories";
-import { AGENT_IDS, getAgentRegistryEntry } from "@/config/agent-registry";
-import { getDivisionConfig } from "@/config/divisions";
-import { RISK_TIER_DESCRIPTIONS, RISK_TIER_LABELS, TRUST_STATE_DESCRIPTIONS, TRUST_STATE_LABELS } from "@/domain/governance";
+import {
+  getAgent,
+  runsForAgent,
+  AGENT_IDS,
+  getAgentRegistryEntry,
+  getDivisionConfig,
+  RISK_TIER_DESCRIPTIONS,
+  RISK_TIER_LABELS,
+  TRUST_STATE_DESCRIPTIONS,
+  TRUST_STATE_LABELS
+} from "@/core";
 import { AGENT_STATUS_COPY } from "@/domain";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge, StatusPill } from "@/components/ui/Badge";

@@ -90,6 +90,7 @@ pass), applied in order:
 | `0003_business_entities.sql` | Every v1 domain entity: findings, recommendations, action proposals, approval decisions, notifications, leads, jobs + sub-entities, safety, accounting, customer cases, voice calls, knowledge items, integration settings |
 | `0004_events_memory_audit.sql` | `audit_events`, `event_log`, `decisions`, `outcomes`, `kpi_observations` |
 | `0005_force_rls.sql` | Applies `FORCE ROW LEVEL SECURITY` to every RLS-enabled table, dynamically (won't silently skip a future table) |
+| `0006_integration_credentials.sql` | `integration_credentials` — the ciphertext-only token store `INTEGRATION_SECURITY.md` names as one of two acceptable designs, added and verified in Phase 3A (see below) |
 
 Every table maps 1:1 to a `src/domain/*` TypeScript interface — see the
 comment at the top of each migration file for the exact source type. This
@@ -170,10 +171,23 @@ decision:
   done now, since partitioning a table with no production data yet would
   be premature.
 
+## Integration credentials (added Phase 3A)
+
+`0006_integration_credentials.sql` adds `integration_credentials` — the
+"dedicated `integration_credentials` table" design `INTEGRATION_SECURITY.md`
+names as one of two acceptable token-storage options. Same tenant-scoped
+RLS pattern as every other table above; verified against a real local
+Postgres 16 instance (`db/verify-integration-credentials-rls.sql`,
+including an explicit check that no plaintext-shaped token column exists).
+`token_ciphertext` is opaque `BYTEA` the application layer encrypts/decrypts
+using a key identified by `encryption_key_id` — this schema has no
+dependency on, and no opinion about, which KMS/secrets-manager provider is
+eventually chosen (that remains a Lane 4 Owner Decision,
+`PRODUCTION_READINESS_CHECKLIST.md`). No application code writes to this
+table yet — no real OAuth flow exists to populate it.
+
 ## What's NOT in this schema (explicitly)
 
-- No credentials or OAuth tokens for any integration — see
-  `INTEGRATION_SECURITY.md` for the separate encrypted-secret-store design.
 - No billing/subscription tables — `PRODUCTION_ARCHITECTURE.md` §11 notes
   this is unbuilt; the `module_entitlements` table this schema does include
   is the licensing *state*, not the billing *transaction* history.
@@ -189,12 +203,16 @@ psql -v migrator_password="'...'" -v app_password="'...'" \
      -v provisioning_password="'...'" -f db/migrations/0000_roles_and_setup.sql
 
 # 2. As agentos_migrator, in order:
-for f in db/migrations/000{1,2,3,4,5}_*.sql; do psql -U agentos_migrator -f "$f"; done
+for f in db/migrations/000{1,2,3,4,5,6}_*.sql; do psql -U agentos_migrator -f "$f"; done
 
 # 3. Verify isolation actually works, connected as agentos_app:
 psql -U agentos_app -f db/verify-rls.sql
+psql -U agentos_app -f db/verify-integration-credentials-rls.sql
 ```
 
-This exact sequence was run in this session against a local Postgres 16
-instance and produced a clean pass — see the commit history for the two
-real bugs found and fixed along the way.
+This exact sequence has been run against a local Postgres 16 instance
+(most recently in Phase 3A, adding `0006`) and produced a clean pass — see
+`BUILD_STATUS_V2.md` for the real bugs found and fixed along the way, and
+`DATABASE_MIGRATION_HANDOFF.md` for the field-by-field completeness audit
+and repository-by-repository map a developer needs to actually replace
+`src/data/store.ts`'s internals with queries against this schema.

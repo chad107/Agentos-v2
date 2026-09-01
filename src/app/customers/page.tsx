@@ -1,4 +1,4 @@
-import { listCustomerCases } from "@/repositories";
+import { listCustomerCases } from "@/core";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge, PriorityChip } from "@/components/ui/Badge";
 import type { CustomerCase, CustomerCaseCategory } from "@/domain";

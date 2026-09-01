@@ -29,7 +29,8 @@ import type {
   User,
   VoiceCall
 } from "@/domain";
-import * as seed from "./seed";
+import * as vrhpSeed from "./seed";
+import * as externalDevSeed from "./seed.external-dev";
 import { buildTop3 } from "@/cohen/orchestrate";
 import { recordEvent } from "@/audit/log";
 import { loadSnapshot, saveSnapshot, persistenceEnabled } from "./persistence";
@@ -98,6 +99,15 @@ function seedAuditTrail(recommendations: Recommendation[], proposals: ActionProp
     }
   }
 }
+
+/**
+ * Which seed module backs the store. Defaults to the real flagship-tenant
+ * dataset (unchanged behavior); set AGENTOS_SEED_DATASET=external-dev to
+ * run the app against src/data/seed.external-dev.ts instead — the
+ * sanitized dataset for a developer who shouldn't see real business data
+ * (Phase 3A, HUMAN_DEVELOPER_HANDOFF.md).
+ */
+const seed = process.env.AGENTOS_SEED_DATASET === "external-dev" ? externalDevSeed : vrhpSeed;
 
 function createStore(): Store {
   const rankedRecommendations = buildTop3(seed.recommendations);

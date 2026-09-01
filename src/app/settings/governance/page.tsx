@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { AGENT_REGISTRY } from "@/config/agent-registry";
-import { listAgents } from "@/repositories";
 import {
+  AGENT_REGISTRY,
+  listAgents,
   RISK_TIERS,
   RISK_TIER_LABELS,
   RISK_TIER_DESCRIPTIONS,
@@ -10,7 +10,7 @@ import {
   TRUST_STATE_DESCRIPTIONS,
   PROMOTION_CRITERIA,
   DEMOTION_TRIGGERS
-} from "@/domain/governance";
+} from "@/core";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 

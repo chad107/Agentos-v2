@@ -1,4 +1,4 @@
-import { listAccountingItems, billsDueSoon, statementsNeedingCrossCheck, exceptions } from "@/repositories";
+import { listAccountingItems, billsDueSoon, statementsNeedingCrossCheck, exceptions } from "@/core";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { KpiRow } from "@/components/ui/KpiRow";

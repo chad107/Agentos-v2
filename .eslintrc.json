@@ -2,5 +2,47 @@
   "extends": ["next/core-web-vitals", "next/typescript", "plugin:jsx-a11y/recommended"],
   "rules": {
     "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["src/app/**/*.ts", "src/app/**/*.tsx", "src/components/**/*.ts", "src/components/**/*.tsx"],
+      "excludedFiles": ["src/components/cohen/AskCohenPanel.tsx", "src/components/approvals/StageTracker.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/repositories",
+                  "@/repositories/*",
+                  "@/data/*",
+                  "@/cohen",
+                  "@/cohen/*",
+                  "@/approvals/engine",
+                  "@/approvals/prohibited",
+                  "@/approvals/stages",
+                  "@/events/*",
+                  "@/audit/*",
+                  "@/integrations/mock-adapters",
+                  "@/integrations/types",
+                  "@/config/agent-registry",
+                  "@/config/divisions",
+                  "@/config/workflows",
+                  "@/domain/authorization",
+                  "@/domain/events",
+                  "@/domain/governance",
+                  "@/domain/memory",
+                  "@/lib/auth",
+                  "@/lib/jsa-cadence",
+                  "@/lib/tenant-context"
+                ],
+                "message": "Dashboard-layer code may not import AgentOS Core internals directly — import from \"@/core\" instead (the sanctioned Core/Dashboard boundary; see src/core/index.ts and IP_BOUNDARY.md). If @/core doesn't yet re-export what you need, add it there rather than reaching past it."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import type { DivisionSnapshot } from "@/repositories/divisions";
+import type { DivisionSnapshot } from "@/core";
 
 /**
  * Cohen Executive Dashboard "division health cards using 3-5 KPI

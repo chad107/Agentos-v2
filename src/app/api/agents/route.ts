@@ -1,4 +1,4 @@
-import { listAgents } from "@/repositories";
+import { listAgents } from "@/core";
 import { ok } from "@/lib/api";
 
 export async function GET() {

@@ -1,4 +1,4 @@
-import { listLeads, salesKpis, competitorSignals } from "@/repositories";
+import { listLeads, salesKpis, competitorSignals } from "@/core";
 import { KpiRow } from "@/components/ui/KpiRow";
 import { PipelineBoard } from "@/components/sales/PipelineBoard";
 import { LeadCard } from "@/components/sales/LeadCard";

@@ -1,4 +1,4 @@
-import { listKnowledgeItems } from "@/repositories";
+import { listKnowledgeItems } from "@/core";
 import { ok } from "@/lib/api";
 
 export async function GET() {

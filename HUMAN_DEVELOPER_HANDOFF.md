@@ -16,11 +16,18 @@ outside the owner's direct control.
 
 ## Recommended path: do the split first, then hand off
 
-1. A trusted developer (or the owner, or this session) carries out
-   `PRODUCTION_ARCHITECTURE.md` §2 Option A: convert remaining direct
-   `@/repositories` imports in `src/app/**` pages into calls against
-   `src/app/api/**` routes, then physically separate into two
-   repositories.
+1. **The import-boundary conversion is now done (Phase 3A)** — every page,
+   component, and API route imports only from `@/core`
+   (`src/core/index.ts`), never `@/repositories/*` or any other
+   Core-internal module directly, and an ESLint rule (`.eslintrc.json`
+   `overrides`) enforces this mechanically rather than by convention. This
+   means the one remaining step of `PRODUCTION_ARCHITECTURE.md` §2 Option A
+   — physically separating into two repositories — now has a single,
+   well-defined seam to cut along: everything importing `@/core` moves to
+   `agentos-dashboard`; `@/core` and everything it re-exports (all of
+   `@/repositories`, plus the Core-internal modules listed below) stays in
+   `agentos-core`. A trusted developer (or the owner, or this session)
+   still needs to do the actual physical split.
 2. **Only the resulting `agentos-dashboard` repository** goes to external
    contracted developers. It contains: `src/app/**` (pages), `src/components/**`,
    the type-shape-only domain files, a generated or hand-written API
@@ -42,13 +49,16 @@ developer must start before the split exists:
   throwaway branch, hand over a zip or a repo pointed at that branch — not
   a fork of the real repository with full history (history would still
   contain the removed files).
-- This will **break the application** — pages that currently import
-  `@/repositories` directly won't compile without those files. A
-  developer working this way needs, at minimum, typed stub/mock versions
-  of the functions their pages call, so they can build UI against
-  realistic-shaped fake data. Building those stubs is itself
-  Human-Developer Implementation (mechanical, but not zero effort — see
-  `PRODUCTION_READINESS_CHECKLIST.md`).
+- This will **break the application** — every page and API route imports
+  `@/core`, which won't compile without the files behind it. A developer
+  working this way needs, at minimum, a typed stub `@/core` module
+  re-exporting mock versions of the same functions/types, so they can
+  build UI against realistic-shaped fake data. Building that stub is
+  itself Human-Developer Implementation, but it's now a single, bounded
+  task (one module to stub, `src/core/index.ts`'s exact export list) rather
+  than chasing down every individual `@/repositories/*` import across
+  dozens of files — the Phase 3A import-boundary conversion made this
+  meaningfully more mechanical than it used to be.
 - **This is a worse option than doing the split properly** — it produces a
   Dashboard codebase that will need real rework to reconnect once Core
   is a real service. Only use it under real time pressure, and treat the
@@ -71,19 +81,24 @@ developer must start before the split exists:
 ### Code (per `IP_BOUNDARY.md` SHAREABLE bucket)
 `src/app/**` (pages), `src/components/**`, `src/domain/entities.ts`,
 `enums.ts`, `index.ts`, `platform.ts` (type shapes only), `src/lib/api.ts`,
-`cn.ts`, `dates.ts`, `ids.ts`, build tooling configs, `public/`.
+`src/lib/validation.ts` (generic zod request-validation helpers, no
+business logic), `cn.ts`, `dates.ts`, `ids.ts`,
+`src/data/seed.external-dev.ts` (the sanitized local-dev dataset — see
+"Sanitized local-dev seed data" below), build tooling configs, `public/`.
 
 ### What to explicitly withhold
 Everything in `IP_BOUNDARY.md`'s RESTRICTED and OWNER-ONLY buckets:
 `src/cohen/**`, `src/approvals/**`, `src/audit/**`, `src/events/**`,
-`src/config/**`, `src/repositories/**`, `src/data/**`,
+`src/config/**`, `src/repositories/**`, `src/data/**` **except
+`src/data/seed.external-dev.ts`** (the one file in that directory that's
+deliberately SHAREABLE — see below),
 `src/lib/auth.ts`/`tenant-context.ts`/`jsa-cadence.ts`,
 `src/integrations/**`, `src/domain/governance.ts`/`memory.ts`/`events.ts`/
 `authorization.ts`, `src/core/**`, every file carrying the
-`PROPRIETARY — AgentOS Core` header comment (added this phase, so it's
-`grep`-able: `grep -rl "PROPRIETARY — AgentOS Core" src/`), all top-level
-spec/build-status documents, and real seed data (`src/data/seed.ts`,
-`sample-data/`).
+`PROPRIETARY — AgentOS Core` header comment (added the Hardening phase, so
+it's `grep`-able: `grep -rl "PROPRIETARY — AgentOS Core" src/`), all
+top-level spec/build-status documents, and real seed data
+(`src/data/seed.ts`, `sample-data/`).
 
 ### Instructions to send them (copy-paste starting point)
 
@@ -92,10 +107,14 @@ spec/build-status documents, and real seed data (`src/data/seed.ts`,
 > (`API_CONTRACT.md`). You do not have, and don't need, the backend
 > reasoning/orchestration code — treat every route in `API_CONTRACT.md` as
 > a black box that returns the documented shape. Do not attempt to
-> reverse-engineer or request the implementation behind any route. Use the
-> sandbox credentials provided separately for any integration testing;
-> never request or use production credentials. All code you write should
-> go through [your normal PR/review process] before merging.
+> reverse-engineer or request the implementation behind any route. For
+> local development, run `AGENTOS_SEED_DATASET=external-dev npm run dev` —
+> this runs the app against a sanitized dataset with no real customer,
+> staff, or vendor data, shaped identically to what production data looks
+> like. Use the sandbox credentials provided separately for any
+> integration testing; never request or use production credentials. All
+> code you write should go through [your normal PR/review process] before
+> merging.
 
 ## Access control mechanics
 
@@ -112,11 +131,28 @@ spec/build-status documents, and real seed data (`src/data/seed.ts`,
 
 ## Sanitized local-dev seed data
 
-**Not yet built — Human-Developer Implementation.** `src/data/seed.ts`
-contains Valley River's actual business narrative (styled as real
-customer/job data, even though fictional). A generic, non-Valley-River
-seed dataset (fake company name, generic customer/job names) should be
-created for anything an external developer runs locally — flagged here
-rather than built in this pass, since it means either hand-authoring a
-parallel seed file or building a seed-data generator, and doing either
-well is more than a "safe, additive" change to make unilaterally.
+**Built in Phase 3A.** `src/data/seed.ts` contains Valley River's actual
+business narrative (customer names, staff names, vendor relationships,
+service-area place names — styled as real business data because it's
+generated from the real business's actual operating detail, even where
+individual records are fictionalized). `src/data/seed.external-dev.ts` is
+the same 19 entity collections and shapes, with every one of those
+identifying strings replaced by a fictional equivalent — including ones
+embedded in email-greeting text and tracking-reference abbreviations, not
+just the obvious name/id fields. Verified clean by an explicit grep-based
+check for every real name/place/vendor string after generation.
+
+**Usage:** `AGENTOS_SEED_DATASET=external-dev npm run dev`
+(`src/data/store.ts` selects between the two seed modules based on this
+env var; unset, the app behaves exactly as it always has). One real
+caveat, found while verifying this: Next.js statically optimizes some
+read-only API routes at *build* time, so the env var only takes effect for
+those routes if it's set before the app is built, not just before it's
+started — set it before `npm run dev` (which always executes fresh, no
+caveat) or before `npm run build` if testing a production build. See
+`README.md` "External-developer local dev" for the same note in context.
+
+**Send external developers `src/data/seed.external-dev.ts` itself** (it's
+in the SHAREABLE code list above) so they have a concrete, readable
+reference for exactly what shape of data the app expects — never
+`src/data/seed.ts`, which stays withheld.

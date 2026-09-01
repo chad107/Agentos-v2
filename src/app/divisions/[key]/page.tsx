@@ -1,8 +1,13 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getDivisionConfig, DIVISIONS } from "@/config/divisions";
-import { divisionSnapshot, recommendationsForDivision, marketingIntelligencePreview } from "@/repositories/divisions";
-import { listKpiObservations } from "@/repositories/kpi-observations";
+import {
+  getDivisionConfig,
+  DIVISIONS,
+  divisionSnapshot,
+  recommendationsForDivision,
+  marketingIntelligencePreview,
+  listKpiObservations
+} from "@/core";
 import { Card, CardBody } from "@/components/ui/Card";
 import { KpiRow } from "@/components/ui/KpiRow";
 import { Badge } from "@/components/ui/Badge";

@@ -1,4 +1,4 @@
-import { listJobs, jobsAtRisk, jobsWithMissingCloseout } from "@/repositories";
+import { listJobs, jobsAtRisk, jobsWithMissingCloseout } from "@/core";
 import { KpiRow } from "@/components/ui/KpiRow";
 import { JobBoard } from "@/components/operations/JobBoard";
 

@@ -1,4 +1,4 @@
-import { listJobs } from "@/repositories";
+import { listJobs } from "@/core";
 import { ok } from "@/lib/api";
 
 export async function GET() {

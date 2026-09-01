@@ -82,18 +82,26 @@ developers — a lint rule is not a security boundary.
 
 ### What Option A concretely requires (Human-Developer Implementation)
 
-1. Enumerate every place a Server Component or page currently imports from
-   `@/repositories` directly (today, that's most pages — see
-   `API_CONTRACT.md` for the full list of existing API routes that already
-   cover much of this surface).
-2. For each one without an existing API route, add one (follow the pattern
-   in `src/app/api/*/route.ts` — thin handler, `getCurrentUser()` /
-   `hasAtLeastRole()` check, calls a repository function, returns via
-   `src/lib/api.ts`'s `ok()`/`badRequest()`/etc.).
+1. ~~Enumerate every place a Server Component or page currently imports
+   from `@/repositories` directly.~~ **Done, Phase 3A** — every page,
+   component, and API route now imports exclusively from `@/core`
+   (`src/core/index.ts`), never `@/repositories/*` or any other
+   Core-internal module directly, mechanically enforced by an ESLint
+   `no-restricted-imports` rule (`.eslintrc.json` `overrides`). This
+   collapses what used to be "most pages, scattered" into one seam: a
+   single file's export list.
+2. For each read/write not yet behind an existing API route, add one
+   (follow the pattern in `src/app/api/*/route.ts` — thin handler,
+   `getCurrentUser()`/`hasAtLeastRole()` check, zod-validated input
+   (`src/lib/validation.ts`, Phase 3A), calls a repository function,
+   returns via `src/lib/api.ts`'s `ok()`/`badRequest()`/etc.). Largely
+   already true — `API_CONTRACT.md` lists the existing coverage.
 3. Move `src/app/**/page.tsx` files to fetch from those routes (via
    `fetch()` with a server-to-server bearer token if kept as Server
    Components calling Core's API, or via a client-side data-fetching layer
-   if the Dashboard becomes a separate deployable entirely).
+   if the Dashboard becomes a separate deployable entirely). **Deliberately
+   not done in Phase 3A, and not a natural next increment on top of step
+   1** — see the note below on why.
 4. Physically split the repository once the import graph has no edges left
    from "dashboard" files into Core files other than the generated/typed
    API client.
@@ -101,17 +109,48 @@ developers — a lint rule is not a security boundary.
 This is **not done in this pass** — it is a multi-week engineering project
 in its own right, and the instructions for this phase are explicit that
 irreversible-feeling architecture changes should be flagged, not
-unilaterally executed. What *is* done in this pass, safely and reversibly:
+unilaterally executed. What *is* done, safely and reversibly, across the
+Hardening phase and Phase 3A:
 
-- **Completed** — every Core file now carries an explicit
-  `PROPRIETARY — AgentOS Core` header comment (see the diff in this
-  commit), so the boundary is unmistakable in the source itself, not just
-  in this document.
-- **Completed** — `src/core/index.ts` added: a single barrel file that
-  re-exports exactly the functions API routes are meant to call. It
-  doesn't move or hide anything (nothing here is a security control by
-  itself — see `IP_BOUNDARY.md`'s "no obscurity" framing) but it makes the
-  *intended* service boundary explicit and lint-checkable later.
+- **Completed (Hardening phase)** — every Core file now carries an
+  explicit `PROPRIETARY — AgentOS Core` header comment, so the boundary is
+  unmistakable in the source itself, not just in this document.
+- **Completed (Hardening phase)** — `src/core/index.ts` added: a single
+  barrel file that re-exports exactly the functions API routes are meant
+  to call.
+- **Completed (Phase 3A)** — the boundary `src/core/index.ts` only
+  *documented* is now *enforced*: an ESLint rule mechanically blocks
+  `src/app/**`/`src/components/**` from importing anything Core-internal
+  except through `@/core`, and every existing import that violated it has
+  been converted. **This is intentionally the Option B mechanism (a lint
+  rule, "weak" isolation per the table above) applied as scaffolding
+  toward Option A, not a substitute for it.** It was worth doing anyway,
+  for two reasons distinct from Option A's real goal: (1) it makes the
+  eventual physical split (step 4) mechanical rather than an archaeology
+  project — the cut line is now one file's export list, not a scan of
+  every page for a stray import; (2) reaching that state required adding
+  a small number of new repository-layer functions
+  (`markAgentRunTriggered`, `findingsByIds`, `testIntegrationConnection`,
+  a `cohen.ts` wrapper — see `BUILD_STATUS_V2.md` "Phase 3A") in place of
+  three routes that had been reaching past `@/repositories` into raw
+  store/adapter access, which is a real defense-in-depth improvement on
+  its own regardless of when the physical split happens. It does **not**
+  create a real process/credential boundary — anyone with repository
+  access still sees Core's source, exactly as Option B's table entry
+  says.
+- **Why step 3 (self-`fetch()`ing Server Components) was not done as a
+  follow-on to step 1, Phase 3A:** converting every Server Component to
+  call its own app's API routes over HTTP, while both still deploy as one
+  Next.js process, adds a real network hop and a new failure mode (the
+  route call can now fail independently of the page render) for zero
+  actual isolation benefit until Core is a separate deployable — the
+  isolation Option A is *for* only exists once step 4 happens. Making
+  that change now would be exactly the kind of broad, behavior-risking
+  change Phase 3A's own guardrails said not to make ("do not build
+  additional broad product features," "preserve all existing AgentOS
+  behaviour"). `@/core` is the correct interim seam; self-fetching is step
+  3's job, done together with (or immediately before) the actual split in
+  step 4, not decoupled from it.
 
 ## 3. Multi-tenant database
 
@@ -223,7 +262,7 @@ choice is an Owner Decision.
 | Multi-tenant DB deployed | Blocked External (no database provisioned) |
 | AuthN (real login) | Human Review Required (provider choice) + Human-Developer Implementation |
 | AuthZ model (roles, tenant membership) | Completed (design) + partial scaffolding (this pass) |
-| API boundary contract | Completed (documented) — enforcement pending §2 |
+| API boundary contract | Completed (documented) + lint-enforced (Phase 3A) — real process/network split (§2 Option A steps 3-4) still pending |
 | Security controls pass | Completed (design) — see `SECURITY_ARCHITECTURE.md` |
 | Integration security architecture | Completed (design) — all integrations remain Blocked External |
 | Background jobs / workflow execution | Designed, not built |

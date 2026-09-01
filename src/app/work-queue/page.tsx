@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { unifiedWorkQueue } from "@/repositories";
-import { DIVISIONS } from "@/config/divisions";
+import { unifiedWorkQueue, DIVISIONS } from "@/core";
 import type { WorkItem } from "@/domain/platform";
 import { Tabs, type TabItem } from "@/components/ui/Tabs";
 import { Card, CardBody } from "@/components/ui/Card";
