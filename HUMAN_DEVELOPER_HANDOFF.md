@@ -79,24 +79,38 @@ developer must start before the split exists:
   production ones)
 
 ### Code (per `IP_BOUNDARY.md` SHAREABLE bucket)
-`src/app/**` (pages), `src/components/**`, `src/domain/entities.ts`,
-`enums.ts`, `index.ts`, `platform.ts` (type shapes only), `src/lib/api.ts`,
-`src/lib/validation.ts` (generic zod request-validation helpers, no
-business logic), `cn.ts`, `dates.ts`, `ids.ts`,
-`src/data/seed.external-dev.ts` (the sanitized local-dev dataset — see
-"Sanitized local-dev seed data" below), build tooling configs, `public/`.
+`src/app/**` **pages only** (every subdirectory of `src/app/` except
+`src/app/api/**` — see the correction note below), `src/components/**`,
+`src/domain/entities.ts`, `enums.ts`, `index.ts`, `platform.ts` (type
+shapes only), `cn.ts`, `dates.ts`, `ids.ts`, `src/data/seed.external-dev.ts`
+(the sanitized local-dev dataset — see "Sanitized local-dev seed data"
+below), build tooling configs, `public/`.
+
+**Correction (Phase 3A):** `src/app/api/**` and the two helper modules only
+route handlers use — `src/lib/api.ts` (the `ok()`/`badRequest()`/etc.
+response shape) and `src/lib/validation.ts` (the zod request-validation
+helpers) — are Core-side per `PRODUCTION_ARCHITECTURE.md` §2's target
+architecture ("agentos-core: ... keep the API routes, drop the pages"),
+not Dashboard-side. An earlier version of this list included them under
+`src/app/**`/`src/lib/**`; verified while assembling an actual handoff
+package that neither helper module is imported anywhere outside
+`src/app/api/**`, confirming they belong with the routes, on the Core
+side of the split.
 
 ### What to explicitly withhold
-Everything in `IP_BOUNDARY.md`'s RESTRICTED and OWNER-ONLY buckets:
+Everything in `IP_BOUNDARY.md`'s RESTRICTED and OWNER-ONLY buckets, plus
+`src/app/api/**` and `src/lib/api.ts`/`validation.ts` per the correction
+above:
 `src/cohen/**`, `src/approvals/**`, `src/audit/**`, `src/events/**`,
 `src/config/**`, `src/repositories/**`, `src/data/**` **except
 `src/data/seed.external-dev.ts`** (the one file in that directory that's
 deliberately SHAREABLE — see below),
-`src/lib/auth.ts`/`tenant-context.ts`/`jsa-cadence.ts`,
+`src/lib/auth.ts`/`tenant-context.ts`/`jsa-cadence.ts`/`api.ts`/`validation.ts`,
 `src/integrations/**`, `src/domain/governance.ts`/`memory.ts`/`events.ts`/
-`authorization.ts`, `src/core/**`, every file carrying the
-`PROPRIETARY — AgentOS Core` header comment (added the Hardening phase, so
-it's `grep`-able: `grep -rl "PROPRIETARY — AgentOS Core" src/`), all
+`authorization.ts`, `src/core/**`, `src/app/api/**`, every file carrying
+the `PROPRIETARY — AgentOS Core` header comment (added the Hardening
+phase, so it's `grep`-able: `grep -rl "PROPRIETARY — AgentOS Core" src/`),
+all
 top-level spec/build-status documents, and real seed data
 (`src/data/seed.ts`, `sample-data/`).
 
